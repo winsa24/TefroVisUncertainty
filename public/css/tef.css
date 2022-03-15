@@ -1,0 +1,167 @@
+html, body {
+    height: 100%;
+ }
+
+.rect-highlight{
+    stroke: red;
+}
+
+.rect-selected{
+    stroke: red;
+}
+
+div.tooltip {
+    color: #737373;
+    position: absolute;
+    text-align: left;
+    /*width: 450px;
+    height: 330px;*/
+        display: inline-block;
+    padding: 2px;
+    font: 16px sans-serif;
+    background: white;
+    border: 2px solid #636363;
+    pointer-events: none;
+  }
+
+.tef-container {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    grid-auto-rows: 1fr 1fr 1fr;
+    height: calc(80vh - 10px);
+    margin: 20px;
+    grid-column-gap: 20px;
+}
+.tef-loading {
+    text-align: center;
+    grid-column: 1/5;
+    grid-row: 2;
+    z-index: 10;
+    visibility: hidden;
+}
+
+.tef-volcanoes {
+    text-align: center;
+    grid-column: 1;
+    grid-row: 1/4;
+}
+
+/*.tef-volcanoes-title{
+    display: grid;
+    grid-template-columns: minmax(100px, 100px) 1fr;
+    grid-auto-rows: 1fr
+}*/
+
+#volcanoMap {
+    margin-top: 42px;
+    width: 1fr;
+    height: calc(90vh - 42px);
+  }
+
+.tef-events {
+    text-align: center;
+    grid-column: 2;
+    grid-row: 1/4;
+    /*overflow: scroll;*/
+}
+
+.tef-menu {
+    /*margin: 20px;*/
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    grid-auto-rows: 1fr;
+}
+
+.tef-menu-card {
+    /*background-color: white ;*/
+    margin: 20px;
+    /*-webkit-border-radius: 10px;
+    -moz-border-radius: 10px;
+    -o-border-radius: 10px;
+    -ms-border-radius: 10px;
+    -khtml-border-radius: 10px;
+    border-radius: 10px;*/
+    Color: white;
+    text-align:center
+}
+
+.tef-bg {
+    /*background-color: #a6a6a6;*/
+    background-color: #202020;
+}
+
+.tab-content{
+    border: #d9d9d9 solid 1px;
+    height: calc(87vh);
+    width: 1fr;
+    display: grid;
+    grid-template-columns: 1fr 
+}
+
+H2 {display: inline; margin-right: 20px;}
+
+.tef-samples {
+    text-align: center;
+    grid-column: 3;
+    grid-row: 1/4;
+}
+
+#scatter{
+    height: calc(83vh);
+    overflow-y: scroll;
+    overflow-x: hidden;
+    padding: 10px;
+}
+
+.tef-overview {
+    grid-column: 1;
+    grid-row: 1 / 4;
+}
+
+.tef-focus-timeline {
+    grid-column: 2;
+    grid-row: 1;
+    margin: 20px;
+}
+
+#timeline-selected{
+    height: calc(83vh);
+    display: grid;
+    grid-template-columns: 1fr;
+    grid-template-rows: minmax(100px, 100px) 1fr
+}
+#focus-timeline{
+    overflow-x: scroll;
+    overflow-y: hidden;
+    height: calc(83vh);
+    grid-column: 2;
+}
+
+
+#focus-timeline-axis{
+    height: calc(83vh);
+    grid-column: 1;
+}
+.tef-geochemistry {
+    grid-column: 3/5;
+    grid-row: 1;
+}
+
+.titulo-tooltip{
+  color: #323141;
+}
+
+.scatterplot{
+    margin-right: 30;
+}
+
+#selectedVolcanoes{
+    text-align: left;
+    padding: 15px;
+    height: calc(83vh);
+    overflow-y: scroll;
+}
+
+.btn-group-sm > .btn, .btn-sm {
+    padding: .0rem .3rem !important;
+}

@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Tefro Explorer</title>
+    <link rel="stylesheet" href="/css/tef.css" />
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.7.1/dist/leaflet.css" />
+    <script src="https://code.jquery.com/jquery-2.2.4.min.js" type="text/javascript"></script>
+    <!--<script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.9.2/dist/umd/popper.min.js"
+        integrity="sha384-IQsoLXl5PILFhosVNubq5LC7Qb9DXgDA9i+tQ8Zj3iwWAwPtgFTxbJ8NT4GN1R8p"
+        crossorigin="anonymous"></script>-->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet"
+        integrity="sha384-1BmE4kWBq78iYhFldvKuhfTAU6auU8tT94WrHftjDbrCEXSU1oBoqyl2QvZ6jIW3" crossorigin="anonymous">
+    <!-- JavaScript Bundle with Popper -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"
+        integrity="sha384-ka7Sk0Gln4gmtz2MlQnikT1wXgYsOg+OMhuP+IlRH9sENBO0LRn5q+8nbTov4+1p"
+        crossorigin="anonymous"></script>
+
+
+
+    <script src="https://d3js.org/d3.v6.min.js"></script>
+    <script src="https://unpkg.com/leaflet@1.7.1/dist/leaflet.js"></script>
+    <script src="/js/crossfilter.min.js"></script>
+    <script src="/js/dc/dc.min.js"></script>
+
+</head>
+
+<body>
+    <div class="collapse" id="navbarToggleExternalContent">
+        <div class="tef-bg p-4 tef-menu">
+            <div class="tef-menu-filter tef-menu-card">
+                <h4>Filters</h4>
+                <div style="display: inline-block;">
+                    <button type="button" class="btn btn-light" id="resetSelection">Reset all
+                        selections</button>
+                    <div>
+                        Visible samples:
+                        <br>
+                        <input type="radio" class="scatter-view" name="scatter-view" value="all" checked> All
+                        <input type="radio" class="scatter-view" name="scatter-view" value="selected"> Selected
+                    </div>
+                </div>
+            </div>
+            <div class="tef-menu-download tef-menu-card">
+                <h4>Download data</h4>
+                <button type="button" class="btn btn-light" id="downloadSelection">Download selected
+                    samples</button>
+                <button type="button" class="btn btn-light" id="downloadAllDataset">Download all
+                    dataset</button>
+            </div>
+        </div>
+    </div>
+    <nav class="navbar navbar-dark tef-bg">
+        <div class="container-fluid">
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse"
+                data-bs-target="#navbarToggleExternalContent" aria-controls="navbarToggleExternalContent"
+                aria-expanded="false" aria-label="Toggle navigation">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+        </div>
+    </nav>
+    <div class="tef-container">
+        <div class="tef-loading" id="tef-loading">
+            Loading... <br>
+            <img src="/img/loading.gif" width="150" height="150">
+        </div>
+        <div class="tef-loading" id="tef-loading-init">
+            <img src="/img/boom.gif" width="196" height="74">
+        </div>
+        <div class="tef-volcanoes main-section">
+            <div>
+                <h2>Volcanic Centers</h2>
+            </div>
+            <div id="mapTab">
+                <div id="volcanoMap">
+                </div>
+            </div>
+        </div>
+        <div class="tef-events main-section">
+            <h2>Events</h2>
+            <nav>
+                <div class="nav nav-tabs" id="nav-tab-events" role="tablist">
+                    <a class="nav-link active" id="nav-events-overview-tab" data-bs-toggle="tab"
+                        data-bs-target="#nav-events-overview" type="button" role="tab"
+                        aria-controls="nav-events-overview" aria-selected="true">Overview</a>
+                    <a class="nav-link" id="nav-events-selected-tab" data-bs-toggle="tab"
+                        data-bs-target="#nav-events-selected" type="button" role="tab"
+                        aria-controls="nav-events-selected" aria-selected="false">Selected</a>
+                </div>
+            </nav>
+            <div class="tab-content" id="nav-tabContent-events">
+                <div class="tab-pane fade show active" id="nav-events-overview" role="tabpanel"
+                    aria-labelledby="nav-events-overview-tab">
+                    <div id="timeline">
+                    </div>
+                </div>
+                <div class="tab-pane fade" id="nav-events-selected" role="tabpanel"
+                    aria-labelledby="nav-events-selected-tab">
+                    <div id="timeline-selected">
+                        <div id="focus-timeline-axis">
+                        </div>
+                        <div id="focus-timeline">
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="tef-samples main-section">
+            <h2>Samples</h2>
+            <nav>
+                <div class="nav nav-tabs" id="nav-tab-samples" role="tablist">
+                    <a class="nav-link active" id="nav-samples-chemistry-tab" data-bs-toggle="tab"
+                        data-bs-target="#nav-samples-chemistry" type="button" role="tab"
+                        aria-controls="nav-samples-chemistry" aria-selected="true">Chemistry <button type="button"
+                            class="btn btn-primary btn-sm" id="addNewScatter" style="margin-left: 25px;">Add
+                            new</button></a>
+                    <a class="nav-link" id="nav-samples-sources-tab" data-bs-toggle="tab"
+                        data-bs-target="#nav-samples-sources" type="button" role="tab"
+                        aria-controls="nav-samples-sources" aria-selected="false">Sources</a>
+                </div>
+            </nav>
+            <div class="tab-content" id="nav-tabContent-samples">
+                <div class="tab-pane fade show active" id="nav-samples-chemistry" role="tabpanel"
+                    aria-labelledby="nav-samples-chemistry-tab">
+                    <div id="scatter" style="overflow-y: scroll;" class="col-12">
+                    </div>
+                </div>
+                <div class="tab-pane fade" id="nav-samples-sources" role="tabpanel"
+                    aria-labelledby="nav-samples-sources-tab">
+                    <div id="selectedVolcanoes">
+                    </div>
+                </div>
+            </div>
+            <%- include ('partials/tef.ejs')%>
+        </div>
+    </div>
+
+
+</body>
