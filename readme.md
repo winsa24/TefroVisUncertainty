@@ -26,20 +26,4 @@ Now, to see the app, open a browser and go to this link
 
 > localhost:3001
 
-## License
-[MIT](https://choosealicense.com/licenses/mit/)
 
-##### with ❤️ @lexpaper
-
-
-# USING CERTBOT
-
-```
-sudo apt-get update &&
-sudo apt-get install software-properties-common &&
-sudo add-apt-repository universe &&
-sudo add-apt-repository ppa:certbot/certbot &&
-sudo apt-get update 
-```
-
-`sudo apt-get install certbot`
