@@ -90,7 +90,8 @@ export default function scatterplot() {
     var xDim = (d3.select('#xDim_' + n).selectAll('.active').node().id).substring(3)
     var yDim = (d3.select('#yDim_' + n).selectAll('.active').node().id).substring(3)
     _scatterDimensions[n] = _ndx
-      .dimension((d) => { return [+d[xDim], +d[yDim], d['Volcano'], d['Event'], d['Flag']] })
+      .dimension((d) => { 
+        return [+d[xDim], +d[yDim], d['Volcano'], d['Event'], d['Flag'], d['TypeOfRegister']] })
       .filter(
         function (d) {
           return d[4] != 'Outlier'
@@ -121,6 +122,8 @@ export default function scatterplot() {
         const yDimLabel = _tef.getElementLabel(yDim)
 
         var scatterGroup = _scatterDimensions[n].group()
+        // console.log(scatterGroup.all())
+
         var chart1 = new dc.ScatterPlot("#scatterChart_" + n)
           .height(300)
           .width(320)
@@ -132,7 +135,7 @@ export default function scatterplot() {
           .keyAccessor(function (d) { return d.key[0]; })
           .valueAccessor(function (d) { return d.key[1]; })
           .clipPadding(10)
-          .dimension(_scatterDimensions[n])
+          .dimension(_scatterDimensions[n]) // Question:: what does dimension work for?
           .highlightedSize(4)
           .symbolSize(5)
           .excludedOpacity(function (opacityKey) {
@@ -146,11 +149,16 @@ export default function scatterplot() {
             }
           })
           .excludedColor('#ddd')
-          .group(scatterGroup)
-          .colorAccessor(function (d) { return [d.key[2], d.key[3]]; })
+          .group(scatterGroup) // Question:: groupe base on ?
+          .colorAccessor(function (d) { return [d.key[2], d.key[3], d.key[5]]; })
           .colors(function (colorKey) {
-            if (colorKey[0] in _selectedVolcanes)
-              return _selectedVolcanes[colorKey[0]]['color']
+            if (colorKey[0] in _selectedVolcanes){
+              if(colorKey[2] === 'Effusive material'){
+                return '#000'
+              }
+              else
+                return _selectedVolcanes[colorKey[0]]['color']
+            }
             else
               return '#ddd'
           })
