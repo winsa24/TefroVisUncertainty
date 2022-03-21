@@ -64,9 +64,27 @@ export default function map() {
         this.closePopup()
       })
       _volcanes[volcan.Name] = volcanIcon
-      _samples[volcan.Name] = []
+      _samples[volcan.Name] = []      
     })
     return map
+  }
+
+  function drawSamplesBorder(volcanName){
+    const volcanoSamples = _samples[volcanName]
+    const effusiveSamples = volcanoSamples.filter(obj => {
+      return obj.typeOfRegister === 'Effusive material';
+    });
+    const volcanIcon = _volcanes[volcanName]
+    let latlngall = [], latlnge = []
+    volcanoSamples.forEach((s) =>{ 
+      latlngall.push(s._latlng)
+    })
+    effusiveSamples.forEach((s) =>{ 
+      latlnge.push(s._latlng)
+    })
+    let allSamplesPolyline = L.polyline(latlngall, { color: volcanIcon.color, weight: 50, opacity: 0.2 }).addTo(_mapContainer);  
+    let effusiveSamplesPolyline = L.polyline(latlnge, { color: volcanIcon.color, weight: 50, opacity: 0.6 }).addTo(_mapContainer);  
+   
   }
 
   // UPDATES AFTER USER SELECTION
@@ -88,6 +106,7 @@ export default function map() {
         stroke: true
       })
       addSamples(volcan, samples)
+      drawSamplesBorder(volcan)
     }
     return volcanIcon.selected
   }
@@ -130,6 +149,7 @@ export default function map() {
         })
       newCircle.event = m.Event
       newCircle.volcano = m.Volcano
+      newCircle.typeOfRegister = m.TypeOfRegister
       newCircle.isVisible = true
       _samples[m.Volcano].push(newCircle)
     })
