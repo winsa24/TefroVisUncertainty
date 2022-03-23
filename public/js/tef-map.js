@@ -84,6 +84,13 @@ export default function map() {
     })
     let allSamplesPolyline = L.polyline(latlngall, { color: volcanIcon.color, weight: 50, opacity: 0.2 }).addTo(_mapContainer);  
     let effusiveSamplesPolyline = L.polyline(latlnge, { color: volcanIcon.color, weight: 50, opacity: 0.6 }).addTo(_mapContainer);  
+    effusiveSamplesPolyline.bindPopup('<h3 style="text-align: center;">Ground Truth </h3>')
+        .on('mouseover', function (e) {
+          this.openPopup()
+        })
+        .on('mouseout', function (e) {
+          this.closePopup()
+        })
    
   }
 
