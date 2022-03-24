@@ -7,6 +7,49 @@ export default function map() {
   var _volcanes
   var _samples
   var _tef
+  const targetKeys = [
+    'SiO2',
+    'TiO2',
+    'Al2O3',
+    'FeOT',
+    'MnO',
+    'MgO',
+    'CaO',
+    'Na2O',
+    'K2O',
+    'P2O5',
+    'Cl',
+    'LOI',
+    'Total',
+    'Rb',
+    'Sr',
+    'Y',
+    'Zr',
+    'Nb',
+    'Cs',
+    'Ba',
+    'La',
+    'Ce',
+    'Pr',
+    'Nd',
+    'Sm',
+    'Eu',
+    'Gd',
+    'Tb',
+    'Dy',
+    'Ho',
+    'Er',
+    'Tm',
+    'Yb',
+    'Lu',
+    'Hf',
+    'Ta',
+    'Pb',
+    'Th',
+    'U',
+    '87Sr_86Sr',
+    '143Nd_144Nd'
+  ]
 
   // INITIALIZATION
   map.init = function (tef) {
@@ -64,7 +107,7 @@ export default function map() {
         this.closePopup()
       })
       _volcanes[volcan.Name] = volcanIcon
-      _samples[volcan.Name] = []      
+      _samples[volcan.Name] = [] 
     })
     return map
   }
@@ -94,6 +137,68 @@ export default function map() {
    
   }
 
+  
+  function avgObj(composArray){
+    let avgChemiCompos = {}
+    let chemiComposValues = {}  // "SiO2": [6.4, 8.2, 21.2..],  "K2O" : [0.32, 0.1, 0.23..],  ...
+    
+    // avg of ground truth 
+    composArray.forEach(item => {
+      if(item.TypeOfRegister === "Effusive material"){
+        for (const key in item) {
+          if(targetKeys.indexOf(key)!= -1){
+            if (!(key in chemiComposValues)){
+              chemiComposValues[key] = new Array()
+              chemiComposValues[key].push(item[key])
+            }else{
+              chemiComposValues[key].push(item[key])
+            }
+          }
+        }
+      }
+    })
+    // get average for each chemical element
+    for (const key in chemiComposValues) {
+      if(targetKeys.indexOf(key)!= -1){
+        const sum = chemiComposValues[key].reduce((a, b) => a + b, 0);
+        const avg = (sum / chemiComposValues[key].length) || 0;
+        avgChemiCompos[key] = avg
+      }
+    }
+   
+    console.log(avgChemiCompos)
+    return avgChemiCompos
+  }
+
+  // TODO:: difference to each sample
+  function disAvg(samplesArray, avgChemiCompos){
+
+  }
+
+  function getChemiCompos(samplesArray){
+    let chemiCompos = [];
+    
+    samplesArray.forEach(item => {
+      let tmp = {"Volcano": item.Volcano, "TypeOfRegister": item.TypeOfRegister}
+      for (const key in item) {
+        if(targetKeys.indexOf(key)!= -1){
+          tmp[key] = item[key]
+        }
+      }
+      chemiCompos.push(tmp)
+    })
+    
+    console.log(chemiCompos)
+    return chemiCompos
+  }
+
+  function drawChemiCompos(volcanName, samples){
+    const circleSamples = _samples[volcanName]
+    const chemiCompos = getChemiCompos(samples)
+    const avgChemiCompos = avgObj(chemiCompos)
+    // TODO:: add avgChemiCompos to a volcan data
+  }
+
   // UPDATES AFTER USER SELECTION
   map.updateSelectedVolcano = function (volcan, isSelected, samples) {
     const volcanIcon = _volcanes[volcan]
@@ -114,6 +219,7 @@ export default function map() {
       })
       addSamples(volcan, samples)
       drawSamplesBorder(volcan)
+      drawChemiCompos(volcan, samples)
     }
     return volcanIcon.selected
   }
