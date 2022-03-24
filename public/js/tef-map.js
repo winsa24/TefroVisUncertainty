@@ -112,13 +112,39 @@ export default function map() {
       map.updateSelectedEvents (volcan, _selectedVolcanoes[volcan].events)
     }
   }
+
+  // TODO:: find a way to release the workload to draw circle with text
+  function circleWithText(latLng, txt, circleOptions, tipText) {
+    var icon = L.divIcon({
+      html: '<div class="txt">' + txt + '</div>',
+      className: 'circle-with-txt',
+      iconSize: [40, 40]
+    });
+    var circle = L.circle(latLng, circleOptions);
+    // TODO:: solve the disappear hover tooltops error
+    circle
+        .bindPopup(tipText)
+        .on('mouseover', function (e) {
+          this.openPopup()
+        })
+        .on('mouseout', function (e) {
+          this.closePopup()
+        })
+    var marker = L.marker(latLng, {
+      icon: icon
+    });
+    var group = L.layerGroup([circle, marker]);
+    return (group);
+  }
+
   function addSamples(volcan, samples) {
     const volcanIcon = _volcanes[volcan]
     samples.forEach(function (m) {
       var lat = m.Latitude
       var lon = m.Longitude
-      var newCircle = L.circle([lat, lon], { radius: 200, color: volcanIcon.color, fillColor: volcanIcon.color, weight: 1, fill: true })
+      // var newCircle = L.circle([lat, lon], { radius: 200, color: volcanIcon.color, fillColor: volcanIcon.color, weight: 1, fill: true })
       var tipText = sampleTipText(m)
+      var newCircle = circleWithText([lat, lon], m.FlagDescription.split('(').length-1, { radius: 200, color: volcanIcon.color, fillColor: volcanIcon.color, weight: 1, fill: true }, tipText)
       newCircle
         .addTo(_mapContainer)
         .bindPopup(tipText)
@@ -130,6 +156,7 @@ export default function map() {
         })
       newCircle.event = m.Event
       newCircle.volcano = m.Volcano
+      newCircle.flag = m.Flag
       newCircle.isVisible = true
       _samples[m.Volcano].push(newCircle)
     })
