@@ -114,20 +114,20 @@ export default function map() {
 
   function drawSamplesBorder(volcanName){
     const volcanoSamples = _samples[volcanName]
-    const effusiveSamples = volcanoSamples.filter(obj => {
-      return obj.typeOfRegister === 'Effusive material';
+    const groundTruthSamples = volcanoSamples.filter(obj => {
+      return (obj.typeOfRegister === 'Effusive material') || (obj.typeOfRegister === 'Pyroclastic material' && obj.TypeOfAnalysis === 'Bulk');
     });
     const volcanIcon = _volcanes[volcanName]
     let latlngall = [], latlnge = []
     volcanoSamples.forEach((s) =>{ 
       latlngall.push(s._latlng)
     })
-    effusiveSamples.forEach((s) =>{ 
+    groundTruthSamples.forEach((s) =>{ 
       latlnge.push(s._latlng)
     })
     let allSamplesPolyline = L.polyline(latlngall, { color: volcanIcon.color, weight: 50, opacity: 0.2 }).addTo(_mapContainer);  
-    let effusiveSamplesPolyline = L.polyline(latlnge, { color: volcanIcon.color, weight: 50, opacity: 0.6 }).addTo(_mapContainer);  
-    effusiveSamplesPolyline.bindPopup('<h3 style="text-align: center;">Ground Truth </h3>')
+    let groundTruthSamplesPolyline = L.polyline(latlnge, { color: volcanIcon.color, weight: 50, opacity: 0.6 }).addTo(_mapContainer);  
+    groundTruthSamplesPolyline.bindPopup('<h3 style="text-align: center;">Ground Truth </h3>')
         .on('mouseover', function (e) {
           this.openPopup()
         })
@@ -144,7 +144,7 @@ export default function map() {
     
     // avg of ground truth 
     composArray.forEach(item => {
-      if(item.TypeOfRegister === "Effusive material"){
+      if((item.typeOfRegister === 'Effusive material') || (item.typeOfRegister === 'Pyroclastic material' && item.TypeOfAnalysis === 'Bulk')){
         for (const key in item) {
           if(targetKeys.indexOf(key)!= -1){
             if (!(key in chemiComposValues)){
@@ -263,6 +263,7 @@ export default function map() {
       newCircle.event = m.Event
       newCircle.volcano = m.Volcano
       newCircle.typeOfRegister = m.TypeOfRegister
+      newCircle.TypeOfAnalysis = m.TypeOfAnalysis
       newCircle.isVisible = true
       _samples[m.Volcano].push(newCircle)
     })
