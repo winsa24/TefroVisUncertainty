@@ -141,10 +141,10 @@ export default function map() {
   function avgObj(composArray){
     let avgChemiCompos = {}
     let chemiComposValues = {}  // "SiO2": [6.4, 8.2, 21.2..],  "K2O" : [0.32, 0.1, 0.23..],  ...
-    
+
     // avg of ground truth 
     composArray.forEach(item => {
-      if((item.typeOfRegister === 'Effusive material') || (item.typeOfRegister === 'Pyroclastic material' && item.TypeOfAnalysis === 'Bulk')){
+      if((item.TypeOfRegister === 'Effusive material') || (item.TypeOfRegister === 'Pyroclastic material' && item.TypeOfAnalysis === 'Bulk')){
         for (const key in item) {
           if(targetKeys.indexOf(key)!= -1){
             if (!(key in chemiComposValues)){
@@ -166,20 +166,31 @@ export default function map() {
       }
     }
    
-    console.log(avgChemiCompos)
+    // console.log(avgChemiCompos)
     return avgChemiCompos
   }
 
-  // TODO:: difference to each sample
+  // calculate distance to avg of each sample. add an additional column
   function disAvg(samplesArray, avgChemiCompos){
-
+    samplesArray.forEach(sample => {
+      let uncertaintyArray = {} // each sample, each elements difference to average
+      for (const key in sample) {
+        if(targetKeys.indexOf(key)!= -1){
+          const dis = Math.abs(sample[key] - avgChemiCompos[key])
+          uncertaintyArray[key] = dis
+        }
+      }
+      sample['uncertainty'] = uncertaintyArray
+    })
+    console.log(samplesArray)
+    return samplesArray
   }
 
   function getChemiCompos(samplesArray){
     let chemiCompos = [];
     
     samplesArray.forEach(item => {
-      let tmp = {"Volcano": item.Volcano, "TypeOfRegister": item.TypeOfRegister}
+      let tmp = {"Volcano": item.Volcano, "TypeOfRegister": item.TypeOfRegister, 'TypeOfAnalysis': item.TypeOfAnalysis}
       for (const key in item) {
         if(targetKeys.indexOf(key)!= -1){
           tmp[key] = item[key]
@@ -188,7 +199,7 @@ export default function map() {
       chemiCompos.push(tmp)
     })
     
-    console.log(chemiCompos)
+    // console.log(chemiCompos)
     return chemiCompos
   }
 
@@ -197,6 +208,7 @@ export default function map() {
     const chemiCompos = getChemiCompos(samples)
     const avgChemiCompos = avgObj(chemiCompos)
     // TODO:: add avgChemiCompos to a volcan data
+    samples = disAvg(samples, avgChemiCompos) // samples with an "uncertainty" column
   }
 
   // UPDATES AFTER USER SELECTION
