@@ -73,6 +73,7 @@ export default function map() {
     L.control.scale().addTo(_mapContainer)
     _volcanes = {}
     _samples = {}
+    initElementSelectors()
     return map
   }
   map.addVolcanoes = function (volcanes) {
@@ -112,6 +113,64 @@ export default function map() {
     return map
   }
 
+  function initElementSelectors() {
+    const dims = ['element1', 'element2']
+    dims.forEach(thisDim => {
+      const div = d3.selectAll('#mapSelector').attr('class', 'btn-group')
+      div
+        .append('button')
+        .attr('type', 'button')
+        .attr('class', 'btn btn-secondary dropdown-toggle')
+        .attr('data-bs-toggle', 'dropdown')
+        //.attr('aria-haspopup', 'true')
+        .attr('aria-expanded', false)
+        .attr('id', thisDim + '_label')
+        .html(thisDim)
+      const divDrop = div.append('div')
+        .attr('class', 'dropdown-menu')
+        .attr('aria-labelledby', thisDim + '_label')
+        .style('height', '400px')
+        .style('overflow', 'scroll')
+        .attr('id', thisDim + '_drop')
+      targetKeys.forEach((e, i) => {
+        var active = false
+        if ((e == 'SiO2' && thisDim == 'element1') || (e == 'K2O' && thisDim == 'element2')) {
+          active = true
+        }
+        divDrop
+          .append('a')
+          .attr('class', 'dropdown-item')
+          .attr('id', 'el_' + e)
+          .on('click', () => {
+            d3
+              .select('#' + thisDim + '_drop')
+              .selectAll('.dropdown-item')
+              .classed('active', false)
+            d3
+              .select('#' + thisDim + '_drop')
+              .select('#el_' + e)
+              .classed('active', true)
+            // TODO :: update samples
+            _tef.updateSelectedSamples()
+            
+            const value = (div.select('#' + thisDim + '_drop').selectAll('.active').node().id).substring(3)
+            d3
+              .selectAll('#' + thisDim + '_label')
+              .html(thisDim + ' (' + value + ')')
+
+          })
+          .classed('active', active)
+          .html(e)
+      })
+      const value = (d3.select('#' + thisDim + '_drop').selectAll('.active').node().id).substring(3)
+      div
+        .selectAll('#' + thisDim + '_label')
+        .html(thisDim + ' (' + value + ')')
+    })
+  }
+
+  
+
   function findClosestGT(volcanoSample, groundTruthSamples, element1, element2){
     let diff = 10000;
     let gtSample = groundTruthSamples[0]
@@ -132,6 +191,11 @@ export default function map() {
       return (obj.typeOfRegister === 'Effusive material') || (obj.typeOfRegister === 'Pyroclastic material' && obj.TypeOfAnalysis === 'Bulk');
     });
     const volcanIcon = _volcanes[volcanName]
+
+    var element1 = (d3.select('#element1_drop').selectAll('.active').node().id).substring(3)
+    var element2 = (d3.select('#element2_drop').selectAll('.active').node().id).substring(3)
+    console.log(element1)
+
     let latlngall = [], latlnge = []
     
     // // original
@@ -163,8 +227,7 @@ export default function map() {
     // TODO:: link to closest GT point
     // latlngall.push(volcanoSamples[0]._latlng)
     volcanoSamples.forEach((s) =>{ 
-      let gtSample = findClosestGT(s, groundTruthSamples, 'SiO2','TiO2')  // TODO:: add options to select
-      console.log(gtSample)
+      let gtSample = findClosestGT(s, groundTruthSamples, element1, element2)  // TODO:: add options to select
       latlngall.push(s._latlng)
       latlngall.push(gtSample._latlng)
       let average = Object.values(s['uncertainty']).reduce((a, b) => a + b) /  Object.values(s['uncertainty']).length;
@@ -286,6 +349,8 @@ export default function map() {
         }        
       }
     })
+    // TOfix
+    drawSamplesBorder(volcan)
   }
   map.updateSelectedSamples = function (_selectedVolcanoes) {
     for (let volcan in _selectedVolcanoes) {
