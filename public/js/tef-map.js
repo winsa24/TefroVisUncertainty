@@ -112,6 +112,20 @@ export default function map() {
     return map
   }
 
+  function findClosestGT(volcanoSample, groundTruthSamples, element1, element2){
+    let diff = 10000;
+    let gtSample = groundTruthSamples[0]
+    groundTruthSamples.forEach((s) => {
+      let tmp = Math.abs((s['uncertainty'][element1] + s['uncertainty'][element2])/2 - (volcanoSample['uncertainty'][element1] + volcanoSample['uncertainty'][element2])/2)
+      if(tmp < diff){
+        gtSample = s
+        diff = tmp
+      }
+    })
+
+    return gtSample
+  }
+
   function drawSamplesBorder(volcanName){
     const volcanoSamples = _samples[volcanName]
     const groundTruthSamples = volcanoSamples.filter(obj => {
@@ -119,21 +133,46 @@ export default function map() {
     });
     const volcanIcon = _volcanes[volcanName]
     let latlngall = [], latlnge = []
+    
+    // // original
+    // volcanoSamples.forEach((s) =>{ 
+    //   latlngall.push(s._latlng)
+    // })
+    // groundTruthSamples.forEach((s) =>{ 
+    //   latlnge.push(s._latlng)
+    // })
+    // let allSamplesPolyline = L.polyline(latlngall, { color: volcanIcon.color, weight: 50, opacity: 0.2 }).addTo(_mapContainer);  
+    // let groundTruthSamplesPolyline = L.polyline(latlnge, { color: volcanIcon.color, weight: 50, opacity: 0.6 }).addTo(_mapContainer);  
+    // groundTruthSamplesPolyline.bindPopup('<h3 style="text-align: center;">Ground Truth </h3>')
+    //     .on('mouseover', function (e) {
+    //       this.openPopup()
+    //     })
+    //     .on('mouseout', function (e) {
+    //       this.closePopup()
+    //     })
+
+    // // dash array
+    // latlngall.push(volcanoSamples[0]._latlng)
+    // volcanoSamples.forEach((s) =>{ 
+    //   latlngall.push(s._latlng)
+    //   let uncertainty = Object.values(s['uncertainty']).toString()
+    //   L.polyline(latlngall, { color: volcanIcon.color, weight: 5, opacity: 0.2, dashArray: uncertainty}).addTo(_mapContainer);
+    //   latlngall.shift()  
+    // })
+
+    // TODO:: link to closest GT point
+    // latlngall.push(volcanoSamples[0]._latlng)
     volcanoSamples.forEach((s) =>{ 
+      let gtSample = findClosestGT(s, groundTruthSamples, 'SiO2','TiO2')  // TODO:: add options to select
+      console.log(gtSample)
       latlngall.push(s._latlng)
+      latlngall.push(gtSample._latlng)
+      let average = Object.values(s['uncertainty']).reduce((a, b) => a + b) /  Object.values(s['uncertainty']).length;
+      L.polyline(latlngall, { color: volcanIcon.color, weight: average, opacity: 0.2 }).addTo(_mapContainer);
+      latlngall = []
+      // latlngall.shift()   // shift() => end to end link. pop() => center to one
     })
-    groundTruthSamples.forEach((s) =>{ 
-      latlnge.push(s._latlng)
-    })
-    let allSamplesPolyline = L.polyline(latlngall, { color: volcanIcon.color, weight: 50, opacity: 0.2 }).addTo(_mapContainer);  
-    let groundTruthSamplesPolyline = L.polyline(latlnge, { color: volcanIcon.color, weight: 50, opacity: 0.6 }).addTo(_mapContainer);  
-    groundTruthSamplesPolyline.bindPopup('<h3 style="text-align: center;">Ground Truth </h3>')
-        .on('mouseover', function (e) {
-          this.openPopup()
-        })
-        .on('mouseout', function (e) {
-          this.closePopup()
-        })
+    
    
   }
 
@@ -165,8 +204,6 @@ export default function map() {
         avgChemiCompos[key] = avg
       }
     }
-   
-    // console.log(avgChemiCompos)
     return avgChemiCompos
   }
 
@@ -182,7 +219,6 @@ export default function map() {
       }
       sample['uncertainty'] = uncertaintyArray
     })
-    console.log(samplesArray)
     return samplesArray
   }
 
@@ -208,7 +244,7 @@ export default function map() {
     const chemiCompos = getChemiCompos(samples)
     const avgChemiCompos = avgObj(chemiCompos)
     // TODO:: add avgChemiCompos to a volcan data
-    samples = disAvg(samples, avgChemiCompos) // samples with an "uncertainty" column
+    return disAvg(samples, avgChemiCompos) // samples with an "uncertainty" column
   }
 
   // UPDATES AFTER USER SELECTION
@@ -229,9 +265,9 @@ export default function map() {
         fill: true,
         stroke: true
       })
+      samples = drawChemiCompos(volcan, samples) // add uncertainty column
       addSamples(volcan, samples)
       drawSamplesBorder(volcan)
-      drawChemiCompos(volcan, samples)
     }
     return volcanIcon.selected
   }
@@ -261,7 +297,12 @@ export default function map() {
     samples.forEach(function (m) {
       var lat = m.Latitude
       var lon = m.Longitude
-      var newCircle = L.circle([lat, lon], { radius: 200, color: volcanIcon.color, fillColor: volcanIcon.color, weight: 1, fill: true })
+      // original
+      var newCircle = L.circle([lat, lon], { radius: 200, color: volcanIcon.color, fillColor: volcanIcon.color, weight: 1, fill: true})
+      // // dash array
+      // let uncertainty = Object.values(m.uncertainty).toString();
+      // var newCircle = L.circle([lat, lon], { radius: 200, color: "#000", fillColor: volcanIcon.color, weight: 1, fill: true, dashArray: uncertainty })
+
       var tipText = sampleTipText(m)
       newCircle
         .addTo(_mapContainer)
@@ -276,6 +317,7 @@ export default function map() {
       newCircle.volcano = m.Volcano
       newCircle.typeOfRegister = m.TypeOfRegister
       newCircle.TypeOfAnalysis = m.TypeOfAnalysis
+      newCircle.uncertainty = m.uncertainty
       newCircle.isVisible = true
       _samples[m.Volcano].push(newCircle)
     })
