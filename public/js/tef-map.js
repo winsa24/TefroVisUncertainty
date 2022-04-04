@@ -25,13 +25,20 @@ export default function map() {
       zoomOffset: -1,
       attribution: mbAttr,
     })
-    _mapContainer = L.map('volcanoMap').setView([-45, -71.489618], 6)
+
+    const latlng = L.latLng(-45, -71.489618);
+
+    // _mapContainer = L.map('volcanoMap').setView([-45, -71.489618], 6)
+    _mapContainer = L.map('volcanoMap', {center: latlng, zoom: 6, maxZoom: 18})
+    
     grayscale.addTo(_mapContainer)
     L.control.scale().addTo(_mapContainer)
     _volcanes = {}
     _samples = {}
     return map
   }
+  
+
   map.addVolcanoes = function (volcanes) {
     volcanes.forEach(function (volcan, i) {
       var lat = Number(volcan.Latitude)
@@ -114,6 +121,10 @@ export default function map() {
   }
   function addSamples(volcan, samples) {
     const volcanIcon = _volcanes[volcan]
+    var markers = L.markerClusterGroup({spiderfyOnMaxZoom: true,
+      showCoverageOnHover: true,
+      zoomToBoundsOnClick: true
+    });
     samples.forEach(function (m) {
       var lat = m.Latitude
       var lon = m.Longitude
@@ -132,7 +143,10 @@ export default function map() {
       newCircle.volcano = m.Volcano
       newCircle.isVisible = true
       _samples[m.Volcano].push(newCircle)
+
+      markers.addLayer(newCircle);
     })
+    _mapContainer.addLayer(markers);
   }
   function removeSamples(volcan) {
     _samples[volcan].forEach(function (m) {

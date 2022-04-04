@@ -296,6 +296,7 @@ export default function tef() {
       'Ba', 'La', 'Ce', 'Pr', 'Nd', 'Sm', 'Eu', 'Gd',
       'Tb', 'Dy', 'Ho', 'Er', 'Tm', 'Yb', 'Lu', 'Hf',
       'Ta', 'Pb', 'Th', 'U']
+    // Question :: what is ppm?
     //const noLabel = ['87Sr_86Sr', '143Nd_144Nd']
     var index = perc.indexOf(el)
     if (index >= 0) return ' (wt.%)'
