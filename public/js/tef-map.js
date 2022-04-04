@@ -188,7 +188,7 @@ export default function map() {
     let diff = 10000;
     let gtSample = groundTruthSamples[0]
     groundTruthSamples.forEach((s) => {
-      let tmp = Math.abs((s['uncertainty'][element1] + s['uncertainty'][element2])/2 - (volcanoSample['uncertainty'][element1] + volcanoSample['uncertainty'][element2])/2)
+      let tmp = Math.abs((s['uncertainty'][element1] + s['uncertainty'][element2])/2 - (volcanoSample['uncertainty'][element1] + volcanoSample['uncertainty'][element2])/2) //TODO:: change to distance to regression line
       if(tmp < diff){
         gtSample = s
         diff = tmp
@@ -214,11 +214,11 @@ export default function map() {
     // volcanoSamples.forEach((s) =>{ 
     //   latlngall.push(s._latlng)
     // })
-    // groundTruthSamples.forEach((s) =>{ 
-    //   latlnge.push(s._latlng)
-    // })
+    groundTruthSamples.forEach((s) =>{ 
+      latlnge.push(s._latlng)
+    })
     // let allSamplesPolyline = L.polyline(latlngall, { color: volcanIcon.color, weight: 50, opacity: 0.2 }).addTo(_mapContainer);  
-    // let groundTruthSamplesPolyline = L.polyline(latlnge, { color: volcanIcon.color, weight: 50, opacity: 0.6 }).addTo(_mapContainer);  
+    let groundTruthSamplesPolyline = L.polyline(latlnge, { color: "#000", weight: 50, opacity: 0.3 }).addTo(_mapContainer);  
     // groundTruthSamplesPolyline.bindPopup('<h3 style="text-align: center;">Ground Truth </h3>')
     //     .on('mouseover', function (e) {
     //       this.openPopup()
