@@ -7,6 +7,7 @@ export default function map() {
   var _volcanes
   var _samples
   var _tef
+  let selectedVolcanes // TOFIX :: 
   const targetKeys = [
     'SiO2',
     'TiO2',
@@ -50,6 +51,7 @@ export default function map() {
     '87Sr_86Sr',
     '143Nd_144Nd'
   ]
+  
 
   // INITIALIZATION
   map.init = function (tef) {
@@ -150,14 +152,14 @@ export default function map() {
               .select('#' + thisDim + '_drop')
               .select('#el_' + e)
               .classed('active', true)
-            // TODO :: update samples
-            _tef.updateSelectedSamples()
+            // // TODO :: update samples
+             _tef.updateSelectedSamples()
+            updateBlob(selectedVolcanes)
             
             const value = (div.select('#' + thisDim + '_drop').selectAll('.active').node().id).substring(3)
             d3
               .selectAll('#' + thisDim + '_label')
               .html(thisDim + ' (' + value + ')')
-
           })
           .classed('active', active)
           .html(e)
@@ -169,8 +171,19 @@ export default function map() {
     })
   }
 
-  
 
+  let polylines = L.layerGroup()
+  let polylinesArray = []
+
+  function updateBlob(volcanName){
+    polylinesArray.forEach(function (item) {
+      polylines.removeLayer(item)
+    });
+    polylinesArray = [];
+    drawSamplesBorder(volcanName)
+  }
+  
+  // TOFIX:: fix why point has many lines
   function findClosestGT(volcanoSample, groundTruthSamples, element1, element2){
     let diff = 10000;
     let gtSample = groundTruthSamples[0]
@@ -194,7 +207,6 @@ export default function map() {
 
     var element1 = (d3.select('#element1_drop').selectAll('.active').node().id).substring(3)
     var element2 = (d3.select('#element2_drop').selectAll('.active').node().id).substring(3)
-    console.log(element1)
 
     let latlngall = [], latlnge = []
     
@@ -231,12 +243,16 @@ export default function map() {
       latlngall.push(s._latlng)
       latlngall.push(gtSample._latlng)
       let average = Object.values(s['uncertainty']).reduce((a, b) => a + b) /  Object.values(s['uncertainty']).length;
-      L.polyline(latlngall, { color: volcanIcon.color, weight: average, opacity: 0.2 }).addTo(_mapContainer);
+      // let polyline = L.polyline(latlngall, { color: volcanIcon.color, weight: average, opacity: 0.2 }).addTo(active_polyline);
+      let polyline = L.polyline(latlngall, { color: volcanIcon.color, weight: average, opacity: 0.2 }).addTo(_mapContainer);
       latlngall = []
       // latlngall.shift()   // shift() => end to end link. pop() => center to one
+      polylines.addLayer(polyline)
+      polylinesArray.push(polyline)
     })
+    console.log(polylinesArray)
+    polylines.addTo(_mapContainer)
     
-   
   }
 
   
@@ -312,6 +328,7 @@ export default function map() {
 
   // UPDATES AFTER USER SELECTION
   map.updateSelectedVolcano = function (volcan, isSelected, samples) {
+    selectedVolcanes = volcan
     const volcanIcon = _volcanes[volcan]
     if (!isSelected) {
       volcanIcon.setStyle({
@@ -349,8 +366,6 @@ export default function map() {
         }        
       }
     })
-    // TOfix
-    drawSamplesBorder(volcan)
   }
   map.updateSelectedSamples = function (_selectedVolcanoes) {
     for (let volcan in _selectedVolcanoes) {

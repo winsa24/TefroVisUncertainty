@@ -216,6 +216,7 @@ export default function tef() {
   tef.updateSelectedSamples = function () {
     _scatterplot.updateSelectedEvents(_selectedVolcanoes)
     _map.updateSelectedSamples(_selectedVolcanoes)
+    // return _selectedVolcanoes
   }
 
   tef.updateSelectedVolcano = function (volcan) {
