@@ -82,6 +82,42 @@ export default function map() {
     return map
   }
 
+  // TODO::
+  function getVolcanoCenter(){
+
+  }
+
+  function getPosWithin2Points(start, end, length){
+    const angle = Math.atan2(end.lat - start.lat, end.lng - start.lng);
+    const xOffset = Math.cos(angle) * length;
+    const yOffset = Math.sin(angle) * length;
+    return {'lat': start.lat + yOffset, 'lng': start.lng + xOffset}
+  }
+
+  var tails = [];
+  function drawSampleTail(sampleArray){
+    tails.forEach(function (item) {
+      _mapContainer.removeLayer(item)
+    });
+    sampleArray.forEach((s)=>{
+      const sampleCenter = s._latlng
+      const volcanoBelongCenter = _volcanes[s.volcano]._latlngs[0][2]
+      // if sample radius is [uncertainty] value
+      const tailLength = s._mRadius / 20000
+      const endTail = getPosWithin2Points(sampleCenter, volcanoBelongCenter, tailLength)
+      
+      let tail = L.polyline([sampleCenter, endTail], {color: '#000', weight: 1}) // longer line bigger distance to RL
+        .addTo(_mapContainer)
+        .on('click', function (e) {
+          // interaction...
+          // shiftViewport()
+          // ...
+        })   
+      tails.push(tail)
+      // use arrow : https://www.npmjs.com/package/leaflet-canvas-markers  ==> (can't change length) 
+    })
+  }
+
   function getStandardDeviation (array) {
     const n = array.length
     const mean = array.reduce((a, b) => a + b) / n
@@ -105,7 +141,7 @@ export default function map() {
       else if(s.RLDistance > (mean - stdd*2) && s.RLDistance < (mean - stdd) ) stdd_2_1.push(s);
       else if(s.RLDistance > (mean + stdd) && s.RLDistance < (mean + stdd*2)) stdd_2_2.push(s);
       else if(s.RLDistance < mean - stdd*2) stdd_3_1.push(s);
-      else stdd_3_2.push(2);
+      else stdd_3_2.push(s);
     })
 
     const vol_latlngs = _volcanes[volcanName]._latlngs[0][2]
@@ -115,6 +151,7 @@ export default function map() {
         console.log(stdd_1)
         volcanoSamples.forEach((s)=>s.setStyle({color:_volcanes[volcanName].color}))
         stdd_1.forEach((s)=>s.setStyle({color:"#F00"}))
+        drawSampleTail(stdd_1)
       })
     // 1 std
     const stdmap = stdd * 2
@@ -125,6 +162,7 @@ export default function map() {
       .on('click', function (e) {
         volcanoSamples.forEach((s)=>s.setStyle({color:_volcanes[volcanName].color}))
         stdd_2_1.forEach((s)=>s.setStyle({color:"#F00"}))
+        drawSampleTail(stdd_2_1)
         console.log(stdd_2_1)
       })
     let circle_std2_2 = L.circle(vol_latlng_std2_2, {radius: stdd_2_2.length * 10, color: '#000'})
@@ -132,6 +170,7 @@ export default function map() {
       .on('click', function (e) {
         volcanoSamples.forEach((s)=>s.setStyle({color:_volcanes[volcanName].color}))
         stdd_2_2.forEach((s)=>s.setStyle({color:"#F00"}))
+        drawSampleTail(stdd_2_2)
         console.log(stdd_2_2)
       })
     let line_std2_1 = L.polyline([vol_latlngs, vol_latlng_std2_1], {color: '#000'}).addTo(_mapContainer);
@@ -145,6 +184,7 @@ export default function map() {
         console.log(stdd_3_1)
         volcanoSamples.forEach((s)=>s.setStyle({color:_volcanes[volcanName].color}))
         stdd_3_1.forEach((s)=>s.setStyle({color:"#F00"}))
+        drawSampleTail(stdd_3_1)
       })
     L.circle(vol_latlng_std3_2, {radius: stdd_3_2.length * 10, color: '#000'})
       .addTo(_mapContainer)
@@ -152,10 +192,12 @@ export default function map() {
         console.log(stdd_3_2)
         volcanoSamples.forEach((s)=>s.setStyle({color:_volcanes[volcanName].color}))
         stdd_3_2.forEach((s)=>s.setStyle({color:"#F00"}))
+        drawSampleTail(stdd_3_2)
       })
     L.polyline([vol_latlng_std2_1, vol_latlng_std3_1], {color: '#000'}).addTo(_mapContainer);
     L.polyline([vol_latlng_std2_2, vol_latlng_std3_2], {color: '#000'}).addTo(_mapContainer);
   }
+
   function drawSamplesBorder(volcanName){
     const volcanoSamples = _samples[volcanName]
     const groundTruthSamples = volcanoSamples.filter(obj => {
