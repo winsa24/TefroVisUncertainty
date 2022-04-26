@@ -32,6 +32,18 @@ export default function map() {
     _samples = {}
     return map
   }
+
+  function drawVocalno(lat, lon){
+    var diff = 0.05
+    var latlngs = [
+      [lat - diff, lon - diff],
+      [lat - diff, lon + diff],
+      [lat + diff, lon],
+    ]
+    var volcanIcon = L.polygon(latlngs, { color: 'grey', fillOpacity: 1 })
+    return volcanIcon;
+  }
+
   map.addVolcanoes = function (volcanes) {
     volcanes.forEach(function (volcan, i) {
       var lat = Number(volcan.Latitude)
@@ -41,12 +53,13 @@ export default function map() {
       volcanTip += '<h4>(' + [lat, lon] + ')</h4>'
       volcanTip += '</div>'
       var diff = 0.05
-      var latlngs = [
-        [lat - diff, lon - diff],
-        [lat - diff, lon + diff],
-        [lat + diff, lon],
-      ]
-      var volcanIcon = L.polygon(latlngs, { color: 'grey', fillOpacity: 1 })
+      // var latlngs = [
+      //   [lat - diff, lon - diff],
+      //   [lat - diff, lon + diff],
+      //   [lat + diff, lon],
+      // ]
+      // var volcanIcon = L.polygon(latlngs, { color: 'grey', fillOpacity: 1 })
+      var volcanIcon = drawVocalno(lat, lon)
       volcanIcon.id = volcan.Name
       volcanIcon.color = volcan.Color
       volcanIcon.isSelected = false
@@ -69,6 +82,101 @@ export default function map() {
     return map
   }
 
+  function getStandardDeviation (array) {
+    const n = array.length
+    const mean = array.reduce((a, b) => a + b) / n
+    return Math.sqrt(array.map(x => Math.pow(x - mean, 2)).reduce((a, b) => a + b) / n)
+  }
+
+  function drawVocalnoVirus(volcanName){
+    const volcanoSamples = _samples[volcanName]
+
+    let RLdistances = []
+    volcanoSamples.forEach((s)=> {if(typeof(s.RLDistance)=='number') RLdistances.push(s.RLDistance)})
+
+    const n = RLdistances.length
+    const mean = RLdistances.reduce((a, b) => {return a + b}, 0) / n
+    const stdd = Math.sqrt(RLdistances.map(x => Math.pow(x - mean, 2)).reduce((a, b) => a + b) / n)
+    console.log(stdd)
+ 
+    let stdd_1 = [], stdd_2_1 = [], stdd_2_2 = [], stdd_3_1 = [], stdd_3_2 = []
+    volcanoSamples.forEach((s)=>{
+      if(s.RLDistance > (mean - stdd) && s.RLDistance < (mean + stdd)) stdd_1.push(s);
+      else if(s.RLDistance > (mean - stdd*2) && s.RLDistance < (mean - stdd) ) stdd_2_1.push(s);
+      else if(s.RLDistance > (mean + stdd) && s.RLDistance < (mean + stdd*2)) stdd_2_2.push(s);
+      else if(s.RLDistance < mean - stdd*2) stdd_3_1.push(s);
+      else stdd_3_2.push(2);
+    })
+
+    const vol_latlngs = _volcanes[volcanName]._latlngs[0][2]
+    var circle_std1 = L.circle(vol_latlngs, {radius: stdd_1.length * 10, color: "#000"})
+      .addTo(_mapContainer)
+      .on('click', function (e) {
+        console.log(stdd_1)
+        volcanoSamples.forEach((s)=>s.setStyle({color:_volcanes[volcanName].color}))
+        stdd_1.forEach((s)=>s.setStyle({color:"#F00"}))
+      })
+    // 1 std
+    const stdmap = stdd * 2
+    const vol_latlng_std2_1 = {'lat' : vol_latlngs.lat, 'lng': vol_latlngs.lng - stdmap}
+    const vol_latlng_std2_2 = {'lat' : vol_latlngs.lat, 'lng': vol_latlngs.lng + stdmap}
+    let circle_std2_1 = L.circle(vol_latlng_std2_1, {radius: stdd_2_1.length * 10, color: '#000'})
+      .addTo(_mapContainer)
+      .on('click', function (e) {
+        volcanoSamples.forEach((s)=>s.setStyle({color:_volcanes[volcanName].color}))
+        stdd_2_1.forEach((s)=>s.setStyle({color:"#F00"}))
+        console.log(stdd_2_1)
+      })
+    let circle_std2_2 = L.circle(vol_latlng_std2_2, {radius: stdd_2_2.length * 10, color: '#000'})
+      .addTo(_mapContainer)
+      .on('click', function (e) {
+        volcanoSamples.forEach((s)=>s.setStyle({color:_volcanes[volcanName].color}))
+        stdd_2_2.forEach((s)=>s.setStyle({color:"#F00"}))
+        console.log(stdd_2_2)
+      })
+    let line_std2_1 = L.polyline([vol_latlngs, vol_latlng_std2_1], {color: '#000'}).addTo(_mapContainer);
+    let line_std2_2 = L.polyline([vol_latlngs, vol_latlng_std2_2], {color: '#000'}).addTo(_mapContainer);
+    // 2 std
+    const vol_latlng_std3_1 = {'lat' : vol_latlngs.lat, 'lng': vol_latlngs.lng - stdmap*2}
+    const vol_latlng_std3_2 = {'lat' : vol_latlngs.lat, 'lng': vol_latlngs.lng + stdmap*2}
+    L.circle(vol_latlng_std3_1, {radius: stdd_3_1.length * 10, color: '#000'})
+      .addTo(_mapContainer)
+      .on('click', function (e) {
+        console.log(stdd_3_1)
+        volcanoSamples.forEach((s)=>s.setStyle({color:_volcanes[volcanName].color}))
+        stdd_3_1.forEach((s)=>s.setStyle({color:"#F00"}))
+      })
+    L.circle(vol_latlng_std3_2, {radius: stdd_3_2.length * 10, color: '#000'})
+      .addTo(_mapContainer)
+      .on('click', function (e) {
+        console.log(stdd_3_2)
+        volcanoSamples.forEach((s)=>s.setStyle({color:_volcanes[volcanName].color}))
+        stdd_3_2.forEach((s)=>s.setStyle({color:"#F00"}))
+      })
+    L.polyline([vol_latlng_std2_1, vol_latlng_std3_1], {color: '#000'}).addTo(_mapContainer);
+    L.polyline([vol_latlng_std2_2, vol_latlng_std3_2], {color: '#000'}).addTo(_mapContainer);
+  }
+  function drawSamplesBorder(volcanName){
+    const volcanoSamples = _samples[volcanName]
+    const groundTruthSamples = volcanoSamples.filter(obj => {
+      return (obj.typeOfRegister === 'Effusive material') || (obj.typeOfRegister === 'Pyroclastic material' && obj.TypeOfAnalysis === 'Bulk');
+    });
+    const volcanIcon = _volcanes[volcanName]
+    let latlnge = [], lats= [], lngs= []
+    
+    groundTruthSamples.forEach((s) =>{ 
+      latlnge.push(s._latlng)
+      lats.push(s._latlng.lat)
+      lngs.push(s._latlng.lng)
+    })
+    const lataverage = lats.reduce((a, b) => a + b) / lats.length;
+    const lngaverage = lngs.reduce((a, b) => a + b) / lngs.length;
+    // console.log(lataverage, lngaverage)
+    // let groundTruthSamplesPolygon = L.polygon(latlnge, { color: "#000", weight: 1, opacity: 0.2 }).addTo(_mapContainer);  
+    // var newCircle = L.circle([lataverage, lngaverage], { radius: 200000, color: "#000", fillColor: volcanIcon.color, fill: true }) 
+   
+  }
+
   // UPDATES AFTER USER SELECTION
   map.updateSelectedVolcano = function (volcan, isSelected, samples) {
     const volcanIcon = _volcanes[volcan]
@@ -88,6 +196,7 @@ export default function map() {
         stroke: true
       })
       addSamples(volcan, samples)
+      drawVocalnoVirus(volcan)
     }
     return volcanIcon.selected
   }
@@ -117,9 +226,7 @@ export default function map() {
     samples.forEach(function (m) {
       var lat = m.Latitude
       var lon = m.Longitude
-      console.log(m)
-      var newCircle = L.circle([lat, lon], { radius: m.sample_RMSE_to_regression?m.sample_RMSE_to_regression * 2000: 200, color: volcanIcon.color, fillColor: volcanIcon.color, weight: 1, fill: true }) 
-      // var newCircle = L.circle([lat, lon], { radius: 200, color: volcanIcon.color, fillColor: volcanIcon.color, weight: m.SampleObservation_distance_to_regression?m.SampleObservation_distance_to_regression * 10:1, fill: true })
+      var newCircle = L.circle([lat, lon], { radius: m.sample_RMSE_to_regression?m.sample_RMSE_to_regression * 2000: 200, color: volcanIcon.color, fillColor: volcanIcon.color, weight: m.SampleObservation_distance_to_regression?m.SampleObservation_distance_to_regression * 5:1, fill: true })
       var tipText = sampleTipText(m)
       newCircle
         .addTo(_mapContainer)
@@ -133,6 +240,7 @@ export default function map() {
       newCircle.event = m.Event
       newCircle.volcano = m.Volcano
       newCircle.isVisible = true
+      newCircle.RLDistance = m.sample_RMSE_to_regression
       _samples[m.Volcano].push(newCircle)
     })
   }
