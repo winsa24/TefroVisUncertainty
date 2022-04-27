@@ -121,7 +121,19 @@ export default function map() {
   function getStandardDeviation (array) {
     const n = array.length
     const mean = array.reduce((a, b) => a + b) / n
-    return Math.sqrt(array.map(x => Math.pow(x - mean, 2)).reduce((a, b) => a + b) / n)
+    const std = Math.sqrt(array.map(x => Math.pow(x - mean, 2)).reduce((a, b) => a + b) / n)
+    return [mean, std]
+  }
+
+  // use standard deviation as critiria 
+  function groupSamples(samples, std, mean){
+    let group1 = [], group2 = [], group3 = []
+    samples.forEach((s)=>{
+      if(s.RLDistance < (mean + std)) group1.push(s);
+      else if(s.RLDistance > (mean + std) && s.RLDistance < (mean + std*2)) group2.push(s);
+      else group3.push(s);
+    })
+    return Array(group1, group2, group3)
   }
 
   function drawVocalnoVirus(volcanName){
@@ -129,73 +141,24 @@ export default function map() {
 
     let RLdistances = []
     volcanoSamples.forEach((s)=> {if(typeof(s.RLDistance)=='number') RLdistances.push(s.RLDistance)})
-
-    const n = RLdistances.length
-    const mean = RLdistances.reduce((a, b) => {return a + b}, 0) / n
-    const stdd = Math.sqrt(RLdistances.map(x => Math.pow(x - mean, 2)).reduce((a, b) => a + b) / n)
-    console.log(stdd)
+    const [mean, std] = getStandardDeviation(RLdistances)
  
-    let stdd_1 = [], stdd_2_1 = [], stdd_2_2 = [], stdd_3_1 = [], stdd_3_2 = []
-    volcanoSamples.forEach((s)=>{
-      if(s.RLDistance > (mean - stdd) && s.RLDistance < (mean + stdd)) stdd_1.push(s);
-      else if(s.RLDistance > (mean - stdd*2) && s.RLDistance < (mean - stdd) ) stdd_2_1.push(s);
-      else if(s.RLDistance > (mean + stdd) && s.RLDistance < (mean + stdd*2)) stdd_2_2.push(s);
-      else if(s.RLDistance < mean - stdd*2) stdd_3_1.push(s);
-      else stdd_3_2.push(s);
-    })
+    const sampleGroups = groupSamples(volcanoSamples, std, mean)
 
     const vol_latlngs = _volcanes[volcanName]._latlngs[0][2]
-    var circle_std1 = L.circle(vol_latlngs, {radius: stdd_1.length * 10, color: "#000"})
-      .addTo(_mapContainer)
-      .on('click', function (e) {
-        console.log(stdd_1)
-        volcanoSamples.forEach((s)=>s.setStyle({color:_volcanes[volcanName].color}))
-        stdd_1.forEach((s)=>s.setStyle({color:"#F00"}))
-        drawSampleTail(stdd_1)
-      })
-    // 1 std
-    const stdmap = stdd * 2
-    const vol_latlng_std2_1 = {'lat' : vol_latlngs.lat, 'lng': vol_latlngs.lng - stdmap}
-    const vol_latlng_std2_2 = {'lat' : vol_latlngs.lat, 'lng': vol_latlngs.lng + stdmap}
-    let circle_std2_1 = L.circle(vol_latlng_std2_1, {radius: stdd_2_1.length * 10, color: '#000'})
-      .addTo(_mapContainer)
-      .on('click', function (e) {
-        volcanoSamples.forEach((s)=>s.setStyle({color:_volcanes[volcanName].color}))
-        stdd_2_1.forEach((s)=>s.setStyle({color:"#F00"}))
-        drawSampleTail(stdd_2_1)
-        console.log(stdd_2_1)
-      })
-    let circle_std2_2 = L.circle(vol_latlng_std2_2, {radius: stdd_2_2.length * 10, color: '#000'})
-      .addTo(_mapContainer)
-      .on('click', function (e) {
-        volcanoSamples.forEach((s)=>s.setStyle({color:_volcanes[volcanName].color}))
-        stdd_2_2.forEach((s)=>s.setStyle({color:"#F00"}))
-        drawSampleTail(stdd_2_2)
-        console.log(stdd_2_2)
-      })
-    let line_std2_1 = L.polyline([vol_latlngs, vol_latlng_std2_1], {color: '#000'}).addTo(_mapContainer);
-    let line_std2_2 = L.polyline([vol_latlngs, vol_latlng_std2_2], {color: '#000'}).addTo(_mapContainer);
-    // 2 std
-    const vol_latlng_std3_1 = {'lat' : vol_latlngs.lat, 'lng': vol_latlngs.lng - stdmap*2}
-    const vol_latlng_std3_2 = {'lat' : vol_latlngs.lat, 'lng': vol_latlngs.lng + stdmap*2}
-    L.circle(vol_latlng_std3_1, {radius: stdd_3_1.length * 10, color: '#000'})
-      .addTo(_mapContainer)
-      .on('click', function (e) {
-        console.log(stdd_3_1)
-        volcanoSamples.forEach((s)=>s.setStyle({color:_volcanes[volcanName].color}))
-        stdd_3_1.forEach((s)=>s.setStyle({color:"#F00"}))
-        drawSampleTail(stdd_3_1)
-      })
-    L.circle(vol_latlng_std3_2, {radius: stdd_3_2.length * 10, color: '#000'})
-      .addTo(_mapContainer)
-      .on('click', function (e) {
-        console.log(stdd_3_2)
-        volcanoSamples.forEach((s)=>s.setStyle({color:_volcanes[volcanName].color}))
-        stdd_3_2.forEach((s)=>s.setStyle({color:"#F00"}))
-        drawSampleTail(stdd_3_2)
-      })
-    L.polyline([vol_latlng_std2_1, vol_latlng_std3_1], {color: '#000'}).addTo(_mapContainer);
-    L.polyline([vol_latlng_std2_2, vol_latlng_std3_2], {color: '#000'}).addTo(_mapContainer);
+    for(let i = 0; i < sampleGroups.length; i ++){
+      const stdmap = i == 0 ? 0 : std * (i+1)
+      const circleLatlng = {'lat' : vol_latlngs.lat, 'lng': vol_latlngs.lng + stdmap}
+      L.circle(circleLatlng, {radius: sampleGroups[i].length * 10, color: "#000"})
+        .addTo(_mapContainer)
+        .on('click', function (e) {
+          console.log(sampleGroups[i])
+          volcanoSamples.forEach((s)=>s.setStyle({color:_volcanes[volcanName].color}))
+          sampleGroups[i].forEach((s)=>s.setStyle({color:"#F00"}))
+          drawSampleTail(sampleGroups[i])
+        })
+      L.polyline([vol_latlngs, circleLatlng], {color: '#000'}).addTo(_mapContainer)
+    }
   }
 
   function drawSamplesBorder(volcanName){
