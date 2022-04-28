@@ -163,11 +163,12 @@ export default function map() {
 
   let glyphs = []
   function drawGlyph(sampleGroups, std, pct){
+    const volcanName = sampleGroups[0][0].volcano
+    // remove glyph of same volcano
     glyphs.forEach(function (item) {
-      _mapContainer.removeLayer(item)
+      if(item.options.volcan == volcanName) _mapContainer.removeLayer(item)
     });
 
-    const volcanName = sampleGroups[0][0].volcano
     const vol_latlngs = _volcanes[volcanName]._latlngs[0][2]
     for(let i = 0; i < sampleGroups.length; i ++){
       let stdmap = 0
@@ -175,7 +176,7 @@ export default function map() {
       if(pct) stdmap = i == 0 ? 0 : pct/100 * 0.5
        
       const circleLatlng = {'lat' : vol_latlngs.lat, 'lng': vol_latlngs.lng + stdmap}
-      const circle = L.circle(circleLatlng, {radius: sampleGroups[i].length * 10, color: "#000"})
+      const circle = L.circle(circleLatlng, {radius: sampleGroups[i].length * 10, color: "#000", volcan: volcanName})
         .addTo(_mapContainer)
         .on('click', function (e) {
           console.log(sampleGroups[i])
@@ -183,14 +184,14 @@ export default function map() {
           sampleGroups[i].forEach((s)=>s.setStyle({color:"#F00"}))
           drawSampleTail(sampleGroups[i])
         })
-      const line = L.polyline([vol_latlngs, circleLatlng], {color: '#000'}).addTo(_mapContainer)
+      const line = L.polyline([vol_latlngs, circleLatlng], {color: '#000', volcan: volcanName}).addTo(_mapContainer)
       glyphs.push(circle)
       glyphs.push(line)
     }
   }
 
-
-  function drawVocalnoVirus(volcanName){
+  // TODO : draw glyph on all selected volcanoes
+  function drawVocalnoGlyphs(volcanName){
     const volcanoSamples = _samples[volcanName]
 
     volcanoSamples.forEach((s)=> { (typeof(s.RLDistance)=='number')? s.RLDistance = s.RLDistance: s.RLDistance = 0})
@@ -198,12 +199,16 @@ export default function map() {
     volcanoSamples.forEach((s)=> {RLdistances.push(s.RLDistance)})
     const [mean, std] = getStandardDeviation(RLdistances)
  
+     // default show std
     const btn_std = document.getElementById("btn_std")
     btn_std.disabled = false
     btn_std.checked = true 
+    document.getElementById("myRange").disabled = true
     const sampleGroups = groupSamples(volcanoSamples, std, mean)
-    drawGlyph(sampleGroups, std, null)
-    // default show std
+    // TODO:: save that grouped samples somewhere. save all the grouped samples of selected volcanoes
+    drawGlyph(sampleGroups, std, null) // TODO:: draw all the grouped samples ::xian (sampleGroups => xxx)
+
+   
     btn_std.onchange = function() {
       if(btn_std.checked) {
         document.getElementById("myRange").disabled = true
@@ -216,9 +221,6 @@ export default function map() {
         drawGlyph(sampleGroups, null, pct)
       }
     }
-
-    
-    
   }
 
   function drawSamplesBorder(volcanName){
@@ -261,7 +263,7 @@ export default function map() {
         stroke: true
       })
       addSamples(volcan, samples)
-      drawVocalnoVirus(volcan)
+      drawVocalnoGlyphs(volcan)
     }
     return volcanIcon.selected
   }
