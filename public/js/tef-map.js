@@ -82,6 +82,7 @@ export default function map() {
     return map
   }
 
+  
   // TODO::
   function getVolcanoCenter(){
 
@@ -136,29 +137,70 @@ export default function map() {
     return Array(group1, group2, group3)
   }
 
-  function drawVocalnoVirus(volcanName){
-    const volcanoSamples = _samples[volcanName]
+  function groupSamplesbyPercentage(samples){
+    const sortedsamples = samples.sort((a, b) => {
+      return a.RLDistance - b.RLDistance;
+    });
+    var slider = document.getElementById("myRange");
+    var output = document.getElementById("demo");
+    output.innerHTML = slider.value; // Display the default slider value
 
-    let RLdistances = []
-    volcanoSamples.forEach((s)=> {if(typeof(s.RLDistance)=='number') RLdistances.push(s.RLDistance)})
-    const [mean, std] = getStandardDeviation(RLdistances)
- 
-    const sampleGroups = groupSamples(volcanoSamples, std, mean)
+    let group1 = samples, group2 = []
 
+    // Update the current slider value (each time you drag the slider handle)
+    slider.oninput = function() {
+      output.innerHTML = this.value; 
+      // Do math with `this.value`...
+      // TODO: percentage calcu
+      const slicePoint = this.value/100 * sortedsamples.length
+      group1 = sortedsamples.slice(0, slicePoint)
+      group2 = sortedsamples.slice(slicePoint)
+      console.log(Array(group1, group2), this.value)
+      drawGlyph(Array(group1, group2), null, this.value)
+    }
+    return [Array(group1, group2), slider.value]
+  }
+
+  let glyphs = []
+  function drawGlyph(sampleGroups, std, pct){
+    glyphs.forEach(function (item) {
+      _mapContainer.removeLayer(item)
+    });
+
+    const volcanName = sampleGroups[0][0].volcano
     const vol_latlngs = _volcanes[volcanName]._latlngs[0][2]
     for(let i = 0; i < sampleGroups.length; i ++){
-      const stdmap = i == 0 ? 0 : std * (i+1)
+      let stdmap = 0
+      if(std) stdmap = i == 0 ? 0 : std * (i+1)
+      if(pct) stdmap = i == 0 ? 0 : pct/100 * 0.5
+       
       const circleLatlng = {'lat' : vol_latlngs.lat, 'lng': vol_latlngs.lng + stdmap}
-      L.circle(circleLatlng, {radius: sampleGroups[i].length * 10, color: "#000"})
+      const circle = L.circle(circleLatlng, {radius: sampleGroups[i].length * 10, color: "#000"})
         .addTo(_mapContainer)
         .on('click', function (e) {
           console.log(sampleGroups[i])
-          volcanoSamples.forEach((s)=>s.setStyle({color:_volcanes[volcanName].color}))
+          sampleGroups.forEach((group) => { group.forEach((s)=>s.setStyle({color:_volcanes[volcanName].color}))})
           sampleGroups[i].forEach((s)=>s.setStyle({color:"#F00"}))
           drawSampleTail(sampleGroups[i])
         })
-      L.polyline([vol_latlngs, circleLatlng], {color: '#000'}).addTo(_mapContainer)
+      const line = L.polyline([vol_latlngs, circleLatlng], {color: '#000'}).addTo(_mapContainer)
+      glyphs.push(circle)
+      glyphs.push(line)
     }
+  }
+  function drawVocalnoVirus(volcanName){
+    const volcanoSamples = _samples[volcanName]
+
+    volcanoSamples.forEach((s)=> { (typeof(s.RLDistance)=='number')? s.RLDistance = s.RLDistance: s.RLDistance = 0})
+    let RLdistances = []
+    volcanoSamples.forEach((s)=> {RLdistances.push(s.RLDistance)})
+    const [mean, std] = getStandardDeviation(RLdistances)
+ 
+    // const sampleGroups = groupSamples(volcanoSamples, std, mean)
+    const [sampleGroups, pct] = groupSamplesbyPercentage(volcanoSamples)
+    console.log(sampleGroups, pct)
+
+    drawGlyph(sampleGroups, null, pct)
   }
 
   function drawSamplesBorder(volcanName){
