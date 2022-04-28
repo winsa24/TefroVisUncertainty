@@ -188,6 +188,8 @@ export default function map() {
       glyphs.push(line)
     }
   }
+
+
   function drawVocalnoVirus(volcanName){
     const volcanoSamples = _samples[volcanName]
 
@@ -196,11 +198,27 @@ export default function map() {
     volcanoSamples.forEach((s)=> {RLdistances.push(s.RLDistance)})
     const [mean, std] = getStandardDeviation(RLdistances)
  
-    // const sampleGroups = groupSamples(volcanoSamples, std, mean)
-    const [sampleGroups, pct] = groupSamplesbyPercentage(volcanoSamples)
-    console.log(sampleGroups, pct)
+    const btn_std = document.getElementById("btn_std")
+    btn_std.disabled = false
+    btn_std.checked = true 
+    const sampleGroups = groupSamples(volcanoSamples, std, mean)
+    drawGlyph(sampleGroups, std, null)
+    // default show std
+    btn_std.onchange = function() {
+      if(btn_std.checked) {
+        document.getElementById("myRange").disabled = true
+        const sampleGroups = groupSamples(volcanoSamples, std, mean)
+        drawGlyph(sampleGroups, std, null)
+      }else {
+        document.getElementById("myRange").disabled = false
+        const [sampleGroups, pct] = groupSamplesbyPercentage(volcanoSamples)
+        console.log(sampleGroups, pct)
+        drawGlyph(sampleGroups, null, pct)
+      }
+    }
 
-    drawGlyph(sampleGroups, null, pct)
+    
+    
   }
 
   function drawSamplesBorder(volcanName){

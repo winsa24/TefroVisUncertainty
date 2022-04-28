@@ -72,10 +72,14 @@
             <div>
                 <h2>Volcanic Centers</h2>
             </div>
-            <div class="slidecontainer">
-                <input type="range" min="1" max="100" value="100" class="slider" id="myRange">
-                <p>Value: <span id="demo">100</span> %</p>
-            </div>
+            <p>
+                <div class="slidecontainer">
+                    <input type="range" min="1" max="100" value="100" class="slider" id="myRange" disabled>
+                    <p>Value: <span id="demo">100</span> %</p>
+                </div>
+                <input type="checkbox" id="btn_std" disabled/>
+                <label for="btn_std">standard deviation</label>
+            </p> 
             <div id="mapTab">
                 <div id="volcanoMap">
                 </div>
