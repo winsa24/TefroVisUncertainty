@@ -52,6 +52,7 @@ export default function map() {
         stroke: true
       })
       addSamples(volcan, samples, isLoaded)
+      if(!isLoaded) drawVocalnoGlyphs(volcan)
     }
     return volcanIcon.selected
   }
@@ -99,6 +100,157 @@ export default function map() {
       map.updateSelectedVolcano(volcan.Name, true, rawSamples, true)
     })
     return map
+  }
+
+
+  function getPosWithin2Points(start, end, length){
+    const angle = Math.atan2(end.lat - start.lat, end.lng - start.lng);
+    const xOffset = Math.cos(angle) * length;
+    const yOffset = Math.sin(angle) * length;
+    return {'lat': start.lat + yOffset, 'lng': start.lng + xOffset}
+  }
+
+  var tails = [];
+  function drawSampleTail(sampleArray){
+    tails.forEach(function (item) {
+      _mapContainer.removeLayer(item)
+    });
+    sampleArray.forEach((s)=>{
+      const sampleCenter = s._latlng
+      const volcanoBelongCenter = _volcanes[s.volcano]._latlngs[0][2]
+      // if sample radius is [uncertainty] value
+      const tailLength = s._mRadius / 20000
+      const endTail = getPosWithin2Points(sampleCenter, volcanoBelongCenter, tailLength)
+      
+      let tail = L.polyline([sampleCenter, endTail], {color: '#000', weight: 1}) // longer line bigger distance to RL
+        .addTo(_mapContainer)
+        .on('click', function (e) {
+          // interaction...
+          // shiftViewport()
+          // ...
+        })   
+      tails.push(tail)
+      // use arrow : https://www.npmjs.com/package/leaflet-canvas-markers  ==> (can't change length) 
+    })
+  }
+
+  function getStandardDeviation (array) {
+    const n = array.length
+    const mean = array.reduce((a, b) => a + b) / n
+    const std = Math.sqrt(array.map(x => Math.pow(x - mean, 2)).reduce((a, b) => a + b) / n)
+    return [mean, std]
+  }
+
+  // use standard deviation as critiria 
+  function groupSamples(samples, std, mean){
+    let group1 = [], group2 = [], group3 = []
+    samples.forEach((s)=>{
+      if(s.RLDistance < (mean + std)) group1.push(s);
+      else if(s.RLDistance > (mean + std) && s.RLDistance < (mean + std*2)) group2.push(s);
+      else group3.push(s);
+    })
+    return Array(group1, group2, group3)
+  }
+
+  function groupSamplesbyPercentage(){
+    let group1 = [], group2 = []
+    var slider = document.getElementById("myRange");
+    var output = document.getElementById("demo");
+
+    // Update the current slider value (each time you drag the slider handle)
+    slider.oninput = function() {
+      output.innerHTML = this.value; 
+
+      allsampleGroups.forEach((volcanoGroup) => {
+        const volcanName = volcanoGroup['volcanName']
+        const samples = _samples[volcanName]
+  
+        const sortedsamples = samples.sort((a, b) => {
+          return a.RLDistance - b.RLDistance;
+        });
+        
+        output.innerHTML = slider.value; // Display the default slider value
+
+        const slicePoint = this.value/100 * sortedsamples.length
+        group1 = sortedsamples.slice(0, slicePoint)
+        group2 = sortedsamples.slice(slicePoint)
+
+        allsampleGroups.forEach((volcanoGroup)=>{
+          if(volcanoGroup['volcanName'] == sortedsamples[0].volcano) volcanoGroup['data'] =  Array(group1, group2)
+        })    
+      })
+      drawGlyph(allsampleGroups, null, this.value) // TODO:: draw all the grouped samples ::xian (sampleGroups => xxx)
+    }
+    return [Array(group1, group2), slider.value]
+  }
+
+  let glyphs = []
+  function drawGlyph(allsampleGroups, std, pct){
+    allsampleGroups.forEach((sg)=>{
+      const volcanName = sg['volcanName']
+      const sampleGroups = std ? sg['stdGroups'] : sg['data']
+      const stdValue = sg['stdValue'] ? sg['stdValue'] : 0.1
+      // remove glyph of same volcano
+      glyphs.forEach(function (item) {
+        if(item.options.volcan == volcanName) _mapContainer.removeLayer(item)
+      });
+
+      const vol_latlngs = _volcanes[volcanName]._latlngs[0][2]
+      for(let i = 0; i < sampleGroups.length; i ++){
+        let stdmap = 0
+        if(std) stdmap = (i == 0 ? 0 : stdValue * (i+1))
+        if(pct) stdmap = (i == 0 ? 0 : pct/100 * 0.5)
+        
+        const circleLatlng = {'lat' : vol_latlngs.lat, 'lng': vol_latlngs.lng + stdmap}
+        const circle = L.circle(circleLatlng, {radius: sampleGroups[i].length * 10, color: "#000", volcan: volcanName})
+          .addTo(_mapContainer)
+          .on('click', function (e) {
+            sampleGroups.forEach((group) => { group.forEach((s)=>s.setStyle({color:_volcanes[volcanName].color}))})
+            sampleGroups[i].forEach((s)=>s.setStyle({color:"#F00"}))
+            drawSampleTail(sampleGroups[i])
+          })
+        const line = L.polyline([vol_latlngs, circleLatlng], {color: '#000', volcan: volcanName}).addTo(_mapContainer)
+        glyphs.push(circle)
+        glyphs.push(line)
+      }
+    })
+    
+  }
+
+  // TODO : draw glyph on all selected volcanoes
+  let allsampleGroups = [] // TODO:: save that grouped samples somewhere. save all the grouped samples of selected volcanoes
+  function drawVocalnoGlyphs(volcanName){
+    const volcanoSamples = _samples[volcanName]
+
+    volcanoSamples.forEach((s)=> { (typeof(s.RLDistance)=='number')? s.RLDistance = s.RLDistance: s.RLDistance = 0})
+    let RLdistances = []
+    volcanoSamples.forEach((s)=> {RLdistances.push(s.RLDistance)})
+    const [mean, std] = getStandardDeviation(RLdistances)
+ 
+     // default show std
+    const btn_std = document.getElementById("btn_std")
+    btn_std.disabled = false
+    btn_std.checked = true 
+    document.getElementById("myRange").disabled = true
+    // pre-calculate std of each volcano
+    const sampleGroups = groupSamples(volcanoSamples, std, mean)
+    // store std
+    allsampleGroups.push({"volcanName" : volcanName, "stdGroups" : sampleGroups, "stdValue": std})
+    drawGlyph(allsampleGroups, true, null) // TODO:: draw all the grouped samples ::xian (sampleGroups => xxx)
+   
+    btn_std.onchange = function() {
+      if(btn_std.checked) {
+        document.getElementById("myRange").disabled = true
+        drawGlyph(allsampleGroups, std, null) //show pre-calcu value
+      }else {
+        document.getElementById("myRange").disabled = false
+        const [sampleGroups, pct] = groupSamplesbyPercentage(allsampleGroups) // only use 'volcanoName'
+        // allsampleGroups.forEach((volcanoGroup)=>{
+        //   if(volcanoGroup['volcanName'] == volcanName) volcanoGroup['data'] =  sampleGroups
+        // })  
+        // drawGlyph(allsampleGroups, null, pct) // TODO:: draw all the grouped samples ::xian (sampleGroups => xxx)
+      }
+    }
   }
 
   map.updateSelectedEvents = function (volcan, eventos) {
