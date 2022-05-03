@@ -57,7 +57,7 @@ exports.getSamples = async (req, res) => {
         sql += "where Volcano like '" + query.volcano + "' and Event like '" + query.event + "'"
     } else {
         // TESTING, I THINK I SHOULD NOT NEED THIS
-        sql += "limit 10"
+        // sql += "limit 10"
     }
     var params = []
     db.all(sql, params, (err, rows) => {

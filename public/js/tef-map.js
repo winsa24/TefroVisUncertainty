@@ -32,7 +32,31 @@ export default function map() {
     _samples = {}
     return map
   }
-  map.addVolcanoes = function (volcanes) {
+  
+  // UPDATES AFTER USER SELECTION
+  map.updateSelectedVolcano = function (volcan, isSelected, samples, isLoaded = false) {
+    const volcanIcon = _volcanes[volcan]
+    if (!isSelected) {
+      volcanIcon.setStyle({
+        color: volcanIcon.color,
+        fillColor: 'gray',
+        fill: true,
+        stroke: false
+      })
+      removeSamples(volcan)
+    } else {
+      volcanIcon.setStyle({
+        color: isLoaded? 'gray' : volcanIcon.color,
+        fillColor: isLoaded? 'gray' :volcanIcon.color,
+        fill: true,
+        stroke: true
+      })
+      addSamples(volcan, samples, isLoaded)
+    }
+    return volcanIcon.selected
+  }
+
+  map.addVolcanoes = function (volcanes, samples) {
     volcanes.forEach(function (volcan, i) {
       var lat = Number(volcan.Latitude)
       var lon = Number(volcan.Longitude)
@@ -65,32 +89,18 @@ export default function map() {
       })
       _volcanes[volcan.Name] = volcanIcon
       _samples[volcan.Name] = []
+      // pre-load samples
+      let rawSamples = []
+      samples.forEach((s)=>{
+        if(s.Volcano == volcan.Name){
+          rawSamples.push(s)
+        }
+      })
+      map.updateSelectedVolcano(volcan.Name, true, rawSamples, true)
     })
     return map
   }
 
-  // UPDATES AFTER USER SELECTION
-  map.updateSelectedVolcano = function (volcan, isSelected, samples) {
-    const volcanIcon = _volcanes[volcan]
-    if (!isSelected) {
-      volcanIcon.setStyle({
-        color: volcanIcon.color,
-        fillColor: 'gray',
-        fill: true,
-        stroke: false
-      })
-      removeSamples(volcan)
-    } else {
-      volcanIcon.setStyle({
-        color: volcanIcon.color,
-        fillColor: volcanIcon.color,
-        fill: true,
-        stroke: true
-      })
-      addSamples(volcan, samples)
-    }
-    return volcanIcon.selected
-  }
   map.updateSelectedEvents = function (volcan, eventos) {
     const markers = _samples[volcan]
     const type = d3.selectAll('.scatter-view:checked').node().value
@@ -112,33 +122,56 @@ export default function map() {
       map.updateSelectedEvents (volcan, _selectedVolcanoes[volcan].events)
     }
   }
-  function addSamples(volcan, samples) {
+  function addSamples(volcan, samples, isLoaded) {
     const volcanIcon = _volcanes[volcan]
     samples.forEach(function (m) {
-      var lat = m.Latitude
-      var lon = m.Longitude
-      console.log(m)
-      var newCircle = L.circle([lat, lon], { radius: m.sample_RMSE_to_regression?m.sample_RMSE_to_regression * 2000: 200, color: volcanIcon.color, fillColor: volcanIcon.color, weight: 1, fill: true }) 
-      // var newCircle = L.circle([lat, lon], { radius: 200, color: volcanIcon.color, fillColor: volcanIcon.color, weight: m.SampleObservation_distance_to_regression?m.SampleObservation_distance_to_regression * 10:1, fill: true })
-      var tipText = sampleTipText(m)
-      newCircle
-        .addTo(_mapContainer)
-        .bindPopup(tipText)
-        .on('mouseover', function (e) {
-          this.openPopup()
+      if(isLoaded) {
+        var lat = m.Latitude
+        var lon = m.Longitude
+        var newCircle = L.circle([lat, lon], { radius: m.sample_RMSE_to_regression? m.sample_RMSE_to_regression * 2000 : 200, color: 'gray' , fillColor: 'gray' , weight: 1, fill: true, opacity: 0.3, fillOpacity: 0.3 })
+        var tipText = sampleTipText(m)
+        newCircle
+          .addTo(_mapContainer)
+          .bindPopup(tipText)
+          .on('mouseover', function (e) {
+            this.openPopup()
+          })
+          .on('mouseout', function (e) {
+            this.closePopup()
+          })
+        newCircle.event = m.Event
+        newCircle.volcano = m.Volcano
+        newCircle.typeOfRegister = m.TypeOfRegister
+        newCircle.TypeOfAnalysis = m.TypeOfAnalysis
+        newCircle.isVisible = true
+        newCircle.RLDistance = m.sample_RMSE_to_regression
+        _samples[m.Volcano].push(newCircle)
+      }else{
+        _samples[m.Volcano].forEach((circle) =>{
+          circle.setStyle({
+            radius: circle.RLDistance?circle.RLDistance * 2000: 200,
+            weight: circle.RLDistance?circle.RLDistance * 10: 1,
+            color: volcanIcon.color,
+            fillColor: volcanIcon.color,
+            opacity: 0.3,
+            fillOpacity: 0.5
+          })
         })
-        .on('mouseout', function (e) {
-          this.closePopup()
-        })
-      newCircle.event = m.Event
-      newCircle.volcano = m.Volcano
-      newCircle.isVisible = true
-      _samples[m.Volcano].push(newCircle)
+      }
+
     })
   }
   function removeSamples(volcan) {
     _samples[volcan].forEach(function (m) {
-      _mapContainer.removeLayer(m)
+      m.setStyle({
+        radius: 200,
+        weight: 1,
+        color: 'gray',
+        fillColor: 'gray',
+        opacity: 0.3,
+        fillOpacity: 0.3
+      })
+      // _mapContainer.removeLayer(m)
     })
   }
   return map

@@ -23,13 +23,15 @@ export default function tef() {
       d3.json('/api/all-volcanoes'),
       d3.json('/api/all-events'),
       d3.csv('/data/TephraDataBase_renormalizado_distance_to_fit.csv'),
+      d3.json('/api/samples')
     ])
       .then(function (data_raw) {
         const volcanoes = data_raw[0].data
         const events = data_raw[1].data
         _selectedVolcanoes = {}
         _samples = data_raw[2]
-
+        const samples = data_raw[3].data
+        
         _ndx = crossfilter(_samples)
         /*_volcanoesEvents = _ndx.dimension(function (d) {
           return [d['Volcano'], d['Event'], d['Flag']]
@@ -46,6 +48,7 @@ export default function tef() {
           _selectedVolcanoes[v.Name].eventsData = {}
           _selectedVolcanoes[v.Name].order = index;
         })
+
         for (let index in events) {
           let e = events[index]
           let v = e.Volcano
@@ -53,7 +56,7 @@ export default function tef() {
           _selectedVolcanoes[v].allEvents.push(e.Name)
           _selectedVolcanoes[v].eventsData[e.Name] = e
         }
-        _map = map().init(tef).addVolcanoes(volcanoes)
+        _map = map().init(tef).addVolcanoes(volcanoes, samples)
         _timeline = timeline().init(tef).initTimeline(volcanoes, events)
         _table = table().init(tef)
         _scatterplot = scatterplot().init(
