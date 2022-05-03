@@ -115,6 +115,7 @@ export default function map() {
     tails.forEach(function (item) {
       _mapContainer.removeLayer(item)
     });
+    showDetailInfo(sampleArray)
     sampleArray.forEach((s)=>{
       const sampleCenter = s._latlng
       const volcanoBelongCenter = _volcanes[s.volcano]._latlngs[0][2]
@@ -132,6 +133,24 @@ export default function map() {
       tails.push(tail)
       // use arrow : https://www.npmjs.com/package/leaflet-canvas-markers  ==> (can't change length) 
     })
+  }
+  function showDetailInfo(sampleArray){
+    const panel = document.getElementById("info-panel")
+    panel.innerHTML = ""
+    if(sampleArray.length > 30) return
+    panel.innerHTML += "<ul>"
+    sampleArray.forEach((s)=>{
+      panel.innerHTML += `<li> ${s.tipText} </li>`
+      // panel.innerHTML += "<ul>"
+
+      // for (const [key, value] of Object.entries(s)) {
+      //   if(key.charAt(0)!="_"){
+      //     panel.innerHTML += `<li> ${key}: ${value} </li>`
+      //   }
+      // }
+      // panel.innerHTML += "</ul>"
+    })
+    panel.innerHTML += "</ul>"
   }
 
   function getStandardDeviation (array) {
@@ -291,6 +310,7 @@ export default function map() {
           .on('mouseout', function (e) {
             this.closePopup()
           })
+        newCircle.tipText = tipText
         newCircle.event = m.Event
         newCircle.volcano = m.Volcano
         newCircle.typeOfRegister = m.TypeOfRegister
