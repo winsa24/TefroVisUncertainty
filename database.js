@@ -63,7 +63,7 @@ let createEvents = function (db, volcanoes) {
   const measuredMaterial = {}
   const samples = []
   const authorsDOI = {}
-  fs.createReadStream('./data/TephraDataBase_renormalizado_distances.csv')
+  fs.createReadStream('./data/TephraDataBase_renormalizado_distance_to_fit.csv')
     .pipe(csv())
     .on('data', (row) => {
       // COMPUTE EVENTS

@@ -22,7 +22,7 @@ export default function tef() {
     Promise.all([
       d3.json('/api/all-volcanoes'),
       d3.json('/api/all-events'),
-      d3.csv('/data/TephraDataBase_renormalizado_distances.csv'),
+      d3.csv('/data/TephraDataBase_renormalizado_distance_to_fit.csv'),
     ])
       .then(function (data_raw) {
         const volcanoes = data_raw[0].data
