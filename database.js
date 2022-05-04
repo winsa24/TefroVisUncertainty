@@ -63,7 +63,7 @@ let createEvents = function (db, volcanoes) {
   const measuredMaterial = {}
   const samples = []
   const authorsDOI = {}
-  fs.createReadStream('./data/TephraDataBase_renormalizado.csv')
+  fs.createReadStream('./data/TephraDataBase_renormalizado_distances.csv')
     .pipe(csv())
     .on('data', (row) => {
       // COMPUTE EVENTS
@@ -210,12 +210,13 @@ let createMeasuredMaterial = function (measuredMaterial, authorsDOI) {
 }
 
 let createSamples = function (volcanes, eventos, muestras) {
-  const columns = `Volcano text, Location text, Event text, Vei text, Magnitude real, Comments text, ISGN text, Flag text, FlagDescription text, TypeOfAnalysis text, Latitude real, Longitude real, DOI text, Map text, TypeOfRegister text, MeasuredMaterial text, TypeOfSection text, SectionID text, SubSectionID text, SubSection_DistanceFromTop text, HistoricalAge text, RadiocarbonLabCode text, "14C_Age" text, "14C_Age_Num" real, "14C_Age_Error" text, "14C_Age_Error_Num" real, StratigraphicPosition text, "40Ar39Ar_Age" text, "40Ar39Ar_Age_Error" text, DepositColor text, DepositThickness_cm text, GrainSize_min_mm text, GrainSize_max_mm text, MeasurementRun text, Authors text, AnalyticalTechnique text, SampleID text, SampleObservationID text, SiO2 real, TiO2 real, Al2O3 real, FeO real, Fe2O3 real, Fe2O3T real, FeOT real, MnO real, MgO real, CaO real, Na2O real, K2O real, P2O5 real, Cl real, LOI real, Total real, Rb real, Sr real, Y real, Zr real, Nb real, Cs real, Ba real, La real, Ce real, Pr real, Nd real, Sm real, Eu real, Gd real, Tb real, Dy real, Ho real, Er real, Tm real, Yb real, Lu real, Hf real, Ta real, Pb real, Th real, U real, "87Sr_86Sr" real, "2SE_87Sr_86Sr" real, "143Nd_144Nd" real, "2SE_143Nd_144Nd" real, VolcanoID integer, EventID integer,`
-  const columns_clear = `Volcano, Location, Event, Vei, Magnitude, Comments, ISGN, Flag, FlagDescription, TypeOfAnalysis, Latitude, Longitude, DOI, Map, TypeOfRegister, MeasuredMaterial, TypeOfSection, SectionID, SubSectionID, SubSection_DistanceFromTop, HistoricalAge, RadiocarbonLabCode, "14C_Age", "14C_Age_Num", "14C_Age_Error", "14C_Age_Error_Num", StratigraphicPosition, "40Ar39Ar_Age", "40Ar39Ar_Age_Error", DepositColor, DepositThickness_cm, GrainSize_min_mm, GrainSize_max_mm, MeasurementRun, Authors, AnalyticalTechnique, SampleID, SampleObservationID, SiO2, TiO2, Al2O3, FeO, Fe2O3, Fe2O3T, FeOT, MnO, MgO, CaO, Na2O, K2O, P2O5, Cl, LOI, Total, Rb, Sr, Y, Zr, Nb, Cs, Ba, La, Ce, Pr, Nd, Sm, Eu, Gd, Tb, Dy, Ho, Er, Tm, Yb, Lu, Hf, Ta, Pb, Th, U, "87Sr_86Sr", "2SE_87Sr_86Sr", "143Nd_144Nd", "2SE_143Nd_144Nd", VolcanoID, EventID`
+  const columns = `Volcano text, Location text, Event text, Vei text, Magnitude real, Comments text, ISGN text, Flag text, FlagDescription text, TypeOfAnalysis text, Latitude real, Longitude real, DOI text, Map text, TypeOfRegister text, MeasuredMaterial text, TypeOfSection text, SectionID text, SubSectionID text, SubSection_DistanceFromTop text, HistoricalAge text, RadiocarbonLabCode text, "14C_Age" text, "14C_Age_Num" real, "14C_Age_Error" text, "14C_Age_Error_Num" real, StratigraphicPosition text, "40Ar39Ar_Age" text, "40Ar39Ar_Age_Error" text, DepositColor text, DepositThickness_cm text, GrainSize_min_mm text, GrainSize_max_mm text, MeasurementRun text, Authors text, AnalyticalTechnique text, SampleID text, SampleObservationID text, SampleObservation_distance_to_regression real, sample_RMSE_to_regression real, SiO2 real, TiO2 real, Al2O3 real, FeO real, Fe2O3 real, Fe2O3T real, FeOT real, MnO real, MgO real, CaO real, Na2O real, K2O real, P2O5 real, Cl real, LOI real, Total real, Rb real, Sr real, Y real, Zr real, Nb real, Cs real, Ba real, La real, Ce real, Pr real, Nd real, Sm real, Eu real, Gd real, Tb real, Dy real, Ho real, Er real, Tm real, Yb real, Lu real, Hf real, Ta real, Pb real, Th real, U real, "87Sr_86Sr" real, "2SE_87Sr_86Sr" real, "143Nd_144Nd" real, "2SE_143Nd_144Nd" real, VolcanoID integer, EventID integer,`
+  const columns_clear = `Volcano, Location, Event, Vei, Magnitude, Comments, ISGN, Flag, FlagDescription, TypeOfAnalysis, Latitude, Longitude, DOI, Map, TypeOfRegister, MeasuredMaterial, TypeOfSection, SectionID, SubSectionID, SubSection_DistanceFromTop, HistoricalAge, RadiocarbonLabCode, "14C_Age", "14C_Age_Num", "14C_Age_Error", "14C_Age_Error_Num", StratigraphicPosition, "40Ar39Ar_Age", "40Ar39Ar_Age_Error", DepositColor, DepositThickness_cm, GrainSize_min_mm, GrainSize_max_mm, MeasurementRun, Authors, AnalyticalTechnique, SampleID, SampleObservationID, SampleObservation_distance_to_regression, sample_RMSE_to_regression, SiO2, TiO2, Al2O3, FeO, Fe2O3, Fe2O3T, FeOT, MnO, MgO, CaO, Na2O, K2O, P2O5, Cl, LOI, Total, Rb, Sr, Y, Zr, Nb, Cs, Ba, La, Ce, Pr, Nd, Sm, Eu, Gd, Tb, Dy, Ho, Er, Tm, Yb, Lu, Hf, Ta, Pb, Th, U, "87Sr_86Sr", "2SE_87Sr_86Sr", "143Nd_144Nd", "2SE_143Nd_144Nd", VolcanoID, EventID`
   var sql_create = "CREATE TABLE sample (id INTEGER PRIMARY KEY AUTOINCREMENT,"
   sql_create += columns
   sql_create += 'FOREIGN KEY(VolcanoID) REFERENCES volcano(id), FOREIGN KEY(EventID) REFERENCES event(id))'
 
+  const columns_clear_arr = columns_clear.split(",");
   db.run(sql_create,
     (err) => {
       if (err) {
@@ -227,7 +228,7 @@ let createSamples = function (volcanes, eventos, muestras) {
           if (!(m.Volcano in volcanes) || !(m.Event in eventos[m.Volcano]))
             return
           var insert = 'INSERT INTO sample (' + columns_clear + ') VALUES ('
-          for (let i = 0; i < 85; i++) {
+          for (let i = 0; i < columns_clear_arr.length - 1; i++) {
             insert += '?,'
           }
           insert += '?)'
@@ -276,6 +277,8 @@ let createSamples = function (volcanes, eventos, muestras) {
             m.AnalyticalTechnique,
             m.SampleID,
             m.SampleObservationID,
+            m.SampleObservation_distance_to_regression,
+            m.sample_RMSE_to_regression,
             m.SiO2,
             m.TiO2,
             m.Al2O3,
