@@ -297,8 +297,8 @@ export default function map() {
     const volcanIcon = _volcanes[volcan]
     samples.forEach(function (m) {
       if(isLoaded) {
-        var lat = m.Latitude
-        var lon = m.Longitude
+        var lat = typeof(m.Latitude) == "number" ? m.Latitude : 0
+        var lon = typeof(m.Longitude) == "number" ? m.Longitude : 0
         var newCircle = L.circle([lat, lon], { radius: m.sample_RMSE_to_regression? m.sample_RMSE_to_regression * 2000 : 200, color: 'gray' , fillColor: 'gray' , weight: 1, fill: true, opacity: 0.3, fillOpacity: 0.3 })
         var tipText = sampleTipText(m)
         newCircle
