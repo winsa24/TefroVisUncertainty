@@ -54,7 +54,42 @@ export default function map() {
       addSamples(volcan, samples, isLoaded)
       if(!isLoaded) drawVocalnoGlyphs(volcan)
     }
+
+    
+
     return volcanIcon.selected
+  }
+
+   // short cut buttons
+   document.getElementById("allSelect").onclick = function(){
+    console.log("select all")
+    Object.keys(_volcanes).forEach((volcanName)=>{
+      const volcanIcon = _volcanes[volcanName]
+      volcanIcon.setStyle({
+        color: volcanIcon.color,
+        fillColor: volcanIcon.color,
+        fill: true,
+        stroke: true
+      })
+      drawVocalnoGlyphs(volcanName)
+      // addSamples(volcanName, samples, false)
+    })
+  }
+  document.getElementById("allCancel").onclick = function(){
+    console.log("cancel all")
+    Object.keys(_volcanes).forEach((volcanName)=>{
+      const volcanIcon = _volcanes[volcanName]
+      volcanIcon.setStyle({
+        color: volcanIcon.color,
+        fillColor: 'gray',
+        fill: true,
+        stroke: false
+      })
+      removeSamples(volcanName)
+      glyphs.forEach(function (item) {
+        _mapContainer.removeLayer(item)
+      });
+    })
   }
 
   map.addVolcanoes = function (volcanes, samples) {
@@ -195,7 +230,7 @@ export default function map() {
         group2 = sortedsamples.slice(slicePoint)
 
         allsampleGroups.forEach((volcanoGroup)=>{
-          if(volcanoGroup['volcanName'] == sortedsamples[0].volcano) volcanoGroup['data'] =  Array(group1, group2)
+          if(volcanoGroup['volcanName'] == volcanName) volcanoGroup['data'] =  Array(group1, group2)
         })    
       })
       drawGlyph(allsampleGroups, null, this.value) // TODO:: draw all the grouped samples ::xian (sampleGroups => xxx)
@@ -244,7 +279,8 @@ export default function map() {
     volcanoSamples.forEach((s)=> { (typeof(s.RLDistance)=='number')? s.RLDistance = s.RLDistance: s.RLDistance = 0})
     let RLdistances = []
     volcanoSamples.forEach((s)=> {RLdistances.push(s.RLDistance)})
-    const [mean, std] = getStandardDeviation(RLdistances)
+    let [mean, std] = [0, 0]
+    if(RLdistances.length>0) [mean, std] = getStandardDeviation(RLdistances)
  
      // default show std
     const btn_std = document.getElementById("btn_std")
@@ -330,7 +366,6 @@ export default function map() {
           })
         })
       }
-
     })
   }
   function removeSamples(volcan) {
