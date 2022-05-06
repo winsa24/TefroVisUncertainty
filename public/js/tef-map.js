@@ -168,6 +168,25 @@ export default function map() {
       tails.push(tail)
       // use arrow : https://www.npmjs.com/package/leaflet-canvas-markers  ==> (can't change length) 
     })
+    // fake tail to other volcano
+    sampleArray.forEach((s)=>{
+      const sampleCenter = s._latlng
+      const randomVolcano = Object.values(_volcanes)[Math.floor(Math.random() * Object.keys(_volcanes).length)]
+      console.log(randomVolcano)
+      const volcanoBelongCenter = randomVolcano._latlngs[0][2]
+      // if sample radius is [uncertainty] value
+      const tailLength = Math.random() * 0.03 // random [0,1]
+      const endTail = getPosWithin2Points(sampleCenter, volcanoBelongCenter, tailLength)
+      
+      let tail = L.polyline([sampleCenter, endTail], {color: randomVolcano.color, weight: 1}) // longer line bigger distance to RL
+        .addTo(_mapContainer)
+        .on('click', function (e) {
+          // interaction...
+          // shiftViewport()
+          // ...
+        })   
+      tails.push(tail)
+    })
   }
   function showDetailInfo(sampleArray){
     const panel = document.getElementById("info-panel")
