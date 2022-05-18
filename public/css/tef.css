@@ -165,3 +165,11 @@ H2 {display: inline; margin-right: 20px;}
 .btn-group-sm > .btn, .btn-sm {
     padding: .0rem .3rem !important;
 }
+
+.volcanoPopup .leaflet-popup-content-wrapper,
+.volcanoPopup .leaflet-popup-tip {
+    background-color: #1fe0; 
+    padding: 8px;
+    width: 100px;
+    height: 100px;
+}
