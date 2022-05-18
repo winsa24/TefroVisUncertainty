@@ -36,9 +36,18 @@ export default function map() {
     volcanes.forEach(function (volcan, i) {
       var lat = Number(volcan.Latitude)
       var lon = Number(volcan.Longitude)
+      let k = volcan.effusive_regression_a?volcan.effusive_regression_a:0
+      let b = volcan.effusive_regression_b?volcan.effusive_regression_b:0
+      let x2 = 15
+      let y2 = k * x2 + b
       var volcanTip = '<div id=' + volcan.Name + '>'
       volcanTip += '<h4>' + volcan.Name + '</h4>'
-      volcanTip += '<h4>(' + [lat, lon] + ')</h4>'
+      volcanTip += '<p><i>(' + [lat, lon] + ')</i></p>'
+      volcanTip += '<h4> Effusive regression line</h4>'
+      volcanTip += '<p><i> # of sample: ' + volcan.effusive_regression_SampleNumber + '</i></p>'
+      volcanTip += '<svg width="100" height="100">'
+      volcanTip += `<line x1="0" y1="${10-b}" x2="${x2}" y2="${-y2}" stroke="${volcan.Color}" stroke-width="2"/>`
+      volcanTip += '</svg>'
       volcanTip += '</div>'
       var diff = 0.05
       var latlngs = [
@@ -52,7 +61,7 @@ export default function map() {
       volcanIcon.isSelected = false
       volcanIcon
         .addTo(_mapContainer)
-        .bindPopup(volcanTip)
+        .bindPopup(volcanTip, {autoClose: false})
         .on('click', function (e) {
           var id = e.target.id
           _tef.selectVolcano(id, true)
