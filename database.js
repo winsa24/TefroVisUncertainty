@@ -22,7 +22,7 @@ let db = new sqlite3.Database(DBSOURCE, (err) => {
 
 let createVolcanoes = function (db) {
   const volcanoes = {}
-  fs.createReadStream('./data/Volcanes.csv')
+  fs.createReadStream('./data/Volcanes_RL.csv')
     .pipe(csv())
     .on('data', (row) => {
       volcanoes[row['Volcano']] = row
@@ -33,7 +33,10 @@ let createVolcanoes = function (db) {
             Name text, 
             Latitude real, 
             Longitude real, 
-            Color text
+            Color text,
+            effusive_regression_a real,
+            effusive_regression_b real,
+            effusive_regression_SampleNumber real
             )`,
         (err) => {
           if (err) {
@@ -41,11 +44,11 @@ let createVolcanoes = function (db) {
           } else {
             console.log('Creating Volcanoes Table')
             // Table just created, creating some rows
-            var insert = 'INSERT INTO volcano (Name, Latitude, Longitude, Color) VALUES (?,?,?,?)'
+            var insert = 'INSERT INTO volcano (Name, Latitude, Longitude, Color, effusive_regression_a, effusive_regression_b, effusive_regression_SampleNumber) VALUES (?,?,?,?,?,?,?)'
             var id = 1;
             for (let v in volcanoes) {
               volcan = volcanoes[v];
-              db.run(insert, [volcan.Volcano, volcan.Latitude, volcan.Longitude, volcan.Color])
+              db.run(insert, [volcan.Volcano, volcan.Latitude, volcan.Longitude, volcan.Color, volcan.effusive_regression_a, volcan.effusive_regression_b, volcan.effusive_regression_SampleNumber])
               volcan.id = id
               id += 1
             }
