@@ -41,6 +41,13 @@ export default function map() {
       volcanTip += '<h4>(' + [lat, lon] + ')</h4>'
       volcanTip += '</div>'
       var diff = 0.05
+      var bounds = [
+        [lat - diff, lon - diff],
+        [lat + diff, lon + diff*2],
+      ];
+      L.rectangle(bounds, {color: "#36454F", weight: 1, fillOpacity:0.1, opacity: 0.3}).addTo(_mapContainer);
+      
+
       var latlngs = [
         [lat - diff, lon - diff],
         [lat - diff, lon + diff],
@@ -64,14 +71,6 @@ export default function map() {
         this.closePopup()
       })
 
-      var bounds = [
-        [lat - diff, lon - diff],
-        [lat + diff, lon + diff*2],
-      ];
-      // create an orange rectangle
-      L.rectangle(bounds, {color: "#ff7800", weight: 1, fillOpacity:0.1, opacity: 0.3}).addTo(_mapContainer);
-      // // zoom the map to the polyline
-      // map.fitBounds(polyline.getBounds());
       let origin = {y: lat - diff, x: lon - diff}
 
       let k = (volcan.effusive_regression_a == -1 || !volcan.effusive_regression_a)? 0 : volcan.effusive_regression_a
@@ -87,9 +86,24 @@ export default function map() {
         [origin.y + y1, origin.x - x1],
         [origin.y - y2, origin.x - x2]
       ]
-      var polyline = L.polyline(latlngs_line, {color: volcan.Color}).addTo(_mapContainer);
-      // // zoom the map to the polyline
-      // map.fitBounds(polyline.getBounds());
+      var polylineEffu = L.polyline(latlngs_line, {color: volcan.Color, opacity: 0.7}).addTo(_mapContainer);
+
+      
+      let k_bulk = (volcan.bulk_pyroclastic_regression_a == -1 || !volcan.bulk_pyroclastic_regression_a)? 0 : volcan.bulk_pyroclastic_regression_a
+      let b_bulk = (volcan.bulk_pyroclastic_regression_b == -1 || !volcan.bulk_pyroclastic_regression_b)? 0 : volcan.bulk_pyroclastic_regression_b
+      let length_bulk = (volcan.bulk_pyroclastic_regression_SampleNumber == -1 || !volcan.bulk_pyroclastic_regression_SampleNumber)? 0 : volcan.bulk_pyroclastic_regression_SampleNumber * 0.001
+      let angle_bulk = Math.atan(k_bulk)
+      let x1_bulk = 0
+      let y1_bulk = b_bulk
+      let x2_bulk = length_bulk * Math.sin(angle_bulk)
+      let y2_bulk = length_bulk * Math.cos(angle_bulk)
+
+      var latlngs_line_bulk = [
+        [origin.y + y1_bulk, origin.x - x1_bulk],
+        [origin.y - y2_bulk, origin.x - x2_bulk]
+      ]
+      var polylineBulk = L.polyline(latlngs_line_bulk, {color: volcan.Color, opacity: 0.3}).addTo(_mapContainer);
+
 
       _volcanes[volcan.Name] = volcanIcon
       _samples[volcan.Name] = []
