@@ -63,6 +63,34 @@ export default function map() {
       volcanIcon.on('mouseout', function (e) {
         this.closePopup()
       })
+
+      var bounds = [
+        [lat - diff, lon - diff],
+        [lat + diff, lon + diff*2],
+      ];
+      // create an orange rectangle
+      L.rectangle(bounds, {color: "#ff7800", weight: 1, fillOpacity:0.1, opacity: 0.3}).addTo(_mapContainer);
+      // // zoom the map to the polyline
+      // map.fitBounds(polyline.getBounds());
+      let origin = {y: lat - diff, x: lon - diff}
+
+      let k = (volcan.effusive_regression_a == -1 || !volcan.effusive_regression_a)? 0 : volcan.effusive_regression_a
+      let b = (volcan.effusive_regression_b == -1 || !volcan.effusive_regression_b)? 0 : volcan.effusive_regression_b
+      let length = (volcan.effusive_regression_SampleNumber == -1 || !volcan.effusive_regression_SampleNumber)? 0 : volcan.effusive_regression_SampleNumber * 0.001
+      let angle = Math.atan(k)
+      let x1 = 0
+      let y1 = b
+      let x2 = length * Math.sin(angle)
+      let y2 = length * Math.cos(angle)
+
+      var latlngs_line = [
+        [origin.y + y1, origin.x - x1],
+        [origin.y - y2, origin.x - x2]
+      ]
+      var polyline = L.polyline(latlngs_line, {color: volcan.Color}).addTo(_mapContainer);
+      // // zoom the map to the polyline
+      // map.fitBounds(polyline.getBounds());
+
       _volcanes[volcan.Name] = volcanIcon
       _samples[volcan.Name] = []
     })
@@ -117,7 +145,6 @@ export default function map() {
     samples.forEach(function (m) {
       var lat = m.Latitude
       var lon = m.Longitude
-      console.log(m)
       var newCircle = L.circle([lat, lon], { radius: m.sample_RMSE_to_regression?m.sample_RMSE_to_regression * 2000: 200, color: volcanIcon.color, fillColor: volcanIcon.color, weight: 1, fill: true }) 
       // var newCircle = L.circle([lat, lon], { radius: 200, color: volcanIcon.color, fillColor: volcanIcon.color, weight: m.SampleObservation_distance_to_regression?m.SampleObservation_distance_to_regression * 10:1, fill: true })
       var tipText = sampleTipText(m)
