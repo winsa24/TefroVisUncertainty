@@ -47,6 +47,7 @@ export default function map() {
       ];
       L.rectangle(bounds, {color: "#36454F", weight: 1, fillOpacity:0.1, opacity: 0.3}).addTo(_mapContainer);
       
+      console.log(volcan)
 
       var latlngs = [
         [lat - diff, lon - diff],
@@ -71,36 +72,40 @@ export default function map() {
         this.closePopup()
       })
 
-      let origin = {y: lat - diff, x: lon - diff}
+      let origin = {y: lat, x: lon - diff} // longitude => x axis, latitude => y axis
+      let scalek = 0.01
 
-      let k = (volcan.effusive_regression_a == -1 || !volcan.effusive_regression_a)? 0 : volcan.effusive_regression_a
-      let b = (volcan.effusive_regression_b == -1 || !volcan.effusive_regression_b)? 0 : volcan.effusive_regression_b
-      let length = (volcan.effusive_regression_SampleNumber == -1 || !volcan.effusive_regression_SampleNumber)? 0 : volcan.effusive_regression_SampleNumber * 0.001
+      let k = (volcan.effusive_regression_b == -1 || !volcan.effusive_regression_b)? 0 : volcan.effusive_regression_b
+      let b = (volcan.effusive_regression_a == -1 || !volcan.effusive_regression_a)? 0 : volcan.effusive_regression_a
+      let length = (volcan.effusive_regression_SampleNumber == -1 || !volcan.effusive_regression_SampleNumber)? 0 : volcan.effusive_regression_SampleNumber
       let angle = Math.atan(k)
+      console.log(Math.cos(angle))
       let x1 = 0
       let y1 = b
-      let x2 = length * Math.sin(angle)
-      let y2 = length * Math.cos(angle)
+      let x2 = length * Math.cos(angle)
+      let y2 = length * Math.sin(angle) + b
+
 
       var latlngs_line = [
-        [origin.y + y1, origin.x - x1],
-        [origin.y - y2, origin.x - x2]
+        [origin.y + y1 * scalek, origin.x + x1 * scalek],
+        [origin.y + y2 * scalek, origin.x + x2 * scalek]
       ]
       var polylineEffu = L.polyline(latlngs_line, {color: volcan.Color, opacity: 0.7}).addTo(_mapContainer);
 
       
-      let k_bulk = (volcan.bulk_pyroclastic_regression_a == -1 || !volcan.bulk_pyroclastic_regression_a)? 0 : volcan.bulk_pyroclastic_regression_a
-      let b_bulk = (volcan.bulk_pyroclastic_regression_b == -1 || !volcan.bulk_pyroclastic_regression_b)? 0 : volcan.bulk_pyroclastic_regression_b
-      let length_bulk = (volcan.bulk_pyroclastic_regression_SampleNumber == -1 || !volcan.bulk_pyroclastic_regression_SampleNumber)? 0 : volcan.bulk_pyroclastic_regression_SampleNumber * 0.001
+      let k_bulk = (volcan.bulk_pyroclastic_regression_b == -1 || !volcan.bulk_pyroclastic_regression_b)? 0 : volcan.bulk_pyroclastic_regression_b
+      let b_bulk = (volcan.bulk_pyroclastic_regression_a == -1 || !volcan.bulk_pyroclastic_regression_a)? 0 : volcan.bulk_pyroclastic_regression_a
+      let length_bulk = (volcan.bulk_pyroclastic_regression_SampleNumber == -1 || !volcan.bulk_pyroclastic_regression_SampleNumber)? 0 : volcan.bulk_pyroclastic_regression_SampleNumber
       let angle_bulk = Math.atan(k_bulk)
       let x1_bulk = 0
       let y1_bulk = b_bulk
-      let x2_bulk = length_bulk * Math.sin(angle_bulk)
-      let y2_bulk = length_bulk * Math.cos(angle_bulk)
-
+      let x2_bulk = length_bulk * Math.cos(angle_bulk)
+      let y2_bulk = length_bulk * Math.sin(angle_bulk) + b_bulk
+      // let y2_bulk = k_bulk>0? y1_bulk + length_bulk * Math.cos(angle_bulk): y1_bulk - length_bulk * Math.cos(angle_bulk)
+      
       var latlngs_line_bulk = [
-        [origin.y + y1_bulk, origin.x - x1_bulk],
-        [origin.y - y2_bulk, origin.x - x2_bulk]
+        [origin.y + y1_bulk * scalek, origin.x + x1_bulk * scalek],
+        [origin.y + y2_bulk * scalek, origin.x + x2_bulk * scalek]
       ]
       var polylineBulk = L.polyline(latlngs_line_bulk, {color: volcan.Color, opacity: 0.3}).addTo(_mapContainer);
 
