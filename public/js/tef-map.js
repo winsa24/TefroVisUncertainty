@@ -79,7 +79,6 @@ export default function map() {
       let b = (volcan.effusive_regression_a == -1 || !volcan.effusive_regression_a)? 0 : volcan.effusive_regression_a
       let length = (volcan.effusive_regression_SampleNumber == -1 || !volcan.effusive_regression_SampleNumber)? 0 : volcan.effusive_regression_SampleNumber
       let angle = Math.atan(k)
-      console.log(Math.cos(angle))
       let x1 = 0
       let y1 = b
       let x2 = length * Math.cos(angle)
