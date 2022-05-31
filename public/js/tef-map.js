@@ -8,6 +8,8 @@ export default function map() {
   var _samples
   var _tef
 
+  let bins = 10;
+
   // INITIALIZATION
   map.init = function (tef) {
 
@@ -28,9 +30,47 @@ export default function map() {
     _mapContainer = L.map('volcanoMap').setView([-45, -71.489618], 6)
     grayscale.addTo(_mapContainer)
     L.control.scale().addTo(_mapContainer)
+    _mapContainer.on('zoomend',function(e){
+      console.log(_mapContainer.getZoom())
+      let zoomLevel = _mapContainer.getZoom()
+      if(zoomLevel <= 3) bins = 2;
+      else if(zoomLevel > 3 && zoomLevel <= 6) bins = 10;
+      else if(zoomLevel > 6 && zoomLevel <= 8) bins = 20;
+      else if(zoomLevel > 8 && zoomLevel <= 10) bins = 50;
+      else bins = 100;
+  
+      removeOldIms()
+      addNewIms()
+    })
+
     _volcanes = {}
     _samples = {}
     return map
+  }
+
+  
+  
+  let volcanIms = []
+  function removeOldIms(){
+    volcanIms.forEach(function (m) {
+      _mapContainer.removeLayer(m)
+    })
+  }
+  function addNewIms(){
+    console.log(_volcanes)
+    for (const [volcanName, volcan] of Object.entries(_volcanes)) {
+      // [0.12, 0.2]=> put image org at the triangle top
+      let lat = Number(volcan._latlng.lat) + 0.12
+      let lon =  Number(volcan._latlng.lng) + 0.2
+      var diff = 0.05
+
+      var imageUrl = `/img/heatmap_${bins}_viridis_r/${volcanName}.png`
+      if(['Huanquihue Group', 'Carrán-Los Venados', 'Yanteles', 'Viedma'].indexOf(volcanName) >= 0)  imageUrl = `/img/blank.png`
+      if(['Puntiagudo', 'Tronador', 'Arenales', 'Aguilera', 'Reclus', 'Fueguino', 'Monte Burney'].indexOf(volcanName) >= 0)  imageUrl = `/img/blank.png`
+      var imageBounds = [[lat + diff * 2, lon + diff * 4], [lat - diff * 2, lon - diff * 4]]
+      let volcanIm = L.imageOverlay(imageUrl, imageBounds, {alt: `no plot for ${volcanName}`}).addTo(_mapContainer)
+      volcanIms.push(volcanIm)
+    }
   }
   map.addVolcanoes = function (volcanes) {
     volcanes.forEach(function (volcan, i) {
@@ -46,7 +86,17 @@ export default function map() {
         [lat - diff, lon + diff],
         [lat + diff, lon],
       ]
-      var volcanIcon = L.polygon(latlngs, { color: 'grey', fillOpacity: 1 })
+
+      // var volcanIcon = L.polygon(latlngs, { color: 'grey', fillOpacity: 0.7, opacity: 0.7 })
+      let latLng = L.latLng(lat, lon)
+      var volcanIcon = L.triangleMarker(latLng, {
+        rotation: 0,
+        width: 20,
+        height: 20,
+        color: volcan.Color,
+        fillColor: volcan.Color
+      })
+
       volcanIcon.id = volcan.Name
       volcanIcon.color = volcan.Color
       volcanIcon.isSelected = false
@@ -66,6 +116,7 @@ export default function map() {
       _volcanes[volcan.Name] = volcanIcon
       _samples[volcan.Name] = []
     })
+    addNewIms()
     return map
   }
 
