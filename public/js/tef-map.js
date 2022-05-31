@@ -46,7 +46,7 @@ export default function map() {
         [lat - diff, lon + diff],
         [lat + diff, lon],
       ]
-      var volcanIcon = L.polygon(latlngs, { color: 'grey', fillOpacity: 1 })
+      var volcanIcon = L.polygon(latlngs, { color: 'grey', fillOpacity: 0.1 })
       volcanIcon.id = volcan.Name
       volcanIcon.color = volcan.Color
       volcanIcon.isSelected = false
@@ -63,6 +63,11 @@ export default function map() {
       volcanIcon.on('mouseout', function (e) {
         this.closePopup()
       })
+
+      var imageUrl = `/img/scatter_plots_fill_border/${volcan.Name}.png`
+      var imageBounds = [[lat + diff *2, lon + diff*2], [lat - diff*2, lon - diff*2]]
+      L.imageOverlay(imageUrl, imageBounds).addTo(_mapContainer)
+
       _volcanes[volcan.Name] = volcanIcon
       _samples[volcan.Name] = []
     })
