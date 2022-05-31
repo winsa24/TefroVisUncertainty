@@ -64,8 +64,8 @@ export default function map() {
         this.closePopup()
       })
 
-      var imageUrl = `/img/scatter_plots_fill_border/${volcan.Name}.png`
-      var imageBounds = [[lat + diff *2, lon + diff*2], [lat - diff*2, lon - diff*2]]
+      var imageUrl = `/img/scatter_plots_fill_border_alpha_sp/${volcan.Name}.png`
+      var imageBounds = [[lat + diff, lon + diff*2], [lat - diff, lon - diff*2]]
       L.imageOverlay(imageUrl, imageBounds).addTo(_mapContainer)
 
       _volcanes[volcan.Name] = volcanIcon
