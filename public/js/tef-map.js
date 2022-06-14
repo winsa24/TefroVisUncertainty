@@ -46,7 +46,7 @@ export default function map() {
         [lat - diff, lon + diff],
         [lat + diff, lon],
       ]
-      var volcanIcon = L.polygon(latlngs, { color: 'grey', fillOpacity: 0.1 })
+      var volcanIcon = L.polygon(latlngs, { color: 'grey', fillOpacity: 0, opacity: 0 })
       volcanIcon.id = volcan.Name
       volcanIcon.color = volcan.Color
       volcanIcon.isSelected = false
@@ -64,9 +64,28 @@ export default function map() {
         this.closePopup()
       })
 
-      var imageUrl = `/img/scatter_plots_fill_border_alpha_sp/${volcan.Name}.png`
-      var imageBounds = [[lat + diff, lon + diff*2], [lat - diff, lon - diff*2]]
-      L.imageOverlay(imageUrl, imageBounds).addTo(_mapContainer)
+      // scatter + cluster + border => `/img/scatter_plots_ border/${volcan.Name}.png`
+      // scatter + cluster + fill(alpha) => `scatter_plots_fill_border_alpha_sp`
+      // cluster + fill => `scatter_plots_fill_border_alpha_nsp`
+      // scatter + cluster + fill(solid) => `scatter_plots_fill_border_solid`
+      // scatter + cluster + fill(alpha = norm(sample number) ) => `scatter_plots_fill_border_alpha_sp_notr`
+      // scatter + cluster + fill(alpha = norm(sample number/area) )=> `scatter_plots_fill_border_alpha_sp_noareatr`
+      // scatter(GT) + cluster(in 3 group) + fill(alpha) + RL + info + white bgk => `/img/scatter_plots_fillPolygon_RL_info_whitebgk/${volcan.Name}_trend.png`
+      // scatter(GT) + cluster(in 3 group) + fill(alpha) + RL => `/img/scatter_plots_fillPolygon_RL/${volcan.Name}_trend.png`
+      // scatter(GT) + cluster + fill(alpha) + RL => `/img/scatter_plots_fillPolygon_RL_allCluster/${volcan.Name}_trend.png`
+
+      // cluster + fill(grayscale(allsampleNumbers)) + border(Color) + RL(1 wrt case) => `/img/scatter_plots_fillPolygon_RLcase_allCluster_allgrayscale/${volcan.Name}.png`
+      // cluster + fill(alpha) + RL(1 wrt case) => `/img/scatter_plots_fillPolygon_RLcase_allCluster/${volcan.Name}.png`
+      // cluster(on 3 group) + fill(alpha) + RL(1 wrt case) =>  `/img/scatter_plots_fillPolygon_RLcase_groupCluster/${volcan.Name}.png`
+      // group + fill(alpha) + RL(1 wrt case) =>  `/img/scatter_plots_fillPolygon_RLcase_group/${volcan.Name}.png`
+      // group + fill(grayscale(allsampleNumbers)) + RL(1 wrt case) =>  `/img/scatter_plots_fillPolygon_RLcase_group/${volcan.Name}.png`
+      // heatmap => heatmap
+      // scatter(glass) + cluster + fill(alpha) + RL(1 wrt case) => `/img/scatter_plots_fillPolygon_RLcase_allCluster_scatterGlass/${volcan.Name}.png`
+      var imageUrl = `/img/heatmap/${volcan.Name}.png`
+      if(['Huanquihue Group', 'Carrán-Los Venados', 'Yanteles', 'Viedma'].indexOf(volcan.Name) >= 0)  imageUrl = `/img/scatter_plots_fillPolygon_RLcase_allCluster_allgrayscale/Corcovado.png`
+      if(['Puntiagudo', 'Tronador', 'Arenales', 'Aguilera', 'Reclus', 'Fueguino', 'Monte Burney'].indexOf(volcan.Name) >= 0)  imageUrl = `/img/scatter_plots_fillPolygon_RLcase_allCluster_allgrayscale/Corcovado.png`
+      var imageBounds = [[lat + diff * 2, lon + diff * 4], [lat - diff * 2, lon - diff * 4]]
+      L.imageOverlay(imageUrl, imageBounds, {alt: `no plot for ${volcan.Name}`}).addTo(_mapContainer)
 
       _volcanes[volcan.Name] = volcanIcon
       _samples[volcan.Name] = []
