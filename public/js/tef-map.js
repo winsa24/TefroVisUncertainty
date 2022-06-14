@@ -36,9 +36,14 @@ export default function map() {
     volcanes.forEach(function (volcan, i) {
       var lat = Number(volcan.Latitude)
       var lon = Number(volcan.Longitude)
+      let k = volcan.effusive_regression_a?volcan.effusive_regression_a:0
+      let b = volcan.effusive_regression_b?volcan.effusive_regression_b:0
+      let x2 = 15
+      let y2 = k * x2 + b
       var volcanTip = '<div id=' + volcan.Name + '>'
-      volcanTip += '<h4>' + volcan.Name + '</h4>'
-      volcanTip += '<h4>(' + [lat, lon] + ')</h4>'
+      volcanTip += '<svg width="100" height="100">'
+      volcanTip += `<line x1="0" y1="${10-b}" x2="${x2}" y2="${-y2}" stroke="${volcan.Color}" stroke-width="2"/>`
+      volcanTip += '</svg>'
       volcanTip += '</div>'
       var diff = 0.05
       var latlngs = [
@@ -52,17 +57,18 @@ export default function map() {
       volcanIcon.isSelected = false
       volcanIcon
         .addTo(_mapContainer)
-        .bindPopup(volcanTip)
+        .bindPopup(volcanTip, {autoClose: false, autoPan: false, closePopupOnClick: false, className: 'volcanoPopup', keepInView: false})
         .on('click', function (e) {
           var id = e.target.id
           _tef.selectVolcano(id, true)
         })
-      volcanIcon.on('mouseover', function (e) {
-        this.openPopup()
-      })
-      volcanIcon.on('mouseout', function (e) {
-        this.closePopup()
-      })
+      volcanIcon.openPopup()
+      // volcanIcon.on('mouseover', function (e) {
+      //   this.openPopup()
+      // })
+      // volcanIcon.on('mouseout', function (e) {
+      //   this.closePopup()
+      // })
       _volcanes[volcan.Name] = volcanIcon
       _samples[volcan.Name] = []
     })
