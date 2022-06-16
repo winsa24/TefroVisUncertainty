@@ -56,10 +56,13 @@ export default function map() {
     })
   }
   function addNewIms(){
-    
+    console.log(_volcanes)
     for (const [volcanName, volcan] of Object.entries(_volcanes)) {
-      var lat = Number(volcan._bounds._northEast.lat)
-      var lon = Number(volcan._bounds._northEast.lng)
+      // [0.12, 0.2]=> put image org at the triangle top
+      let lat = Number(volcan._latlng.lat) + 0.12
+      let lon =  Number(volcan._latlng.lng) + 0.2
+      // var lat = Number(volcan._bounds._northEast.lat)
+      // var lon = Number(volcan._bounds._northEast.lng)
       var diff = 0.05
 
       var imageUrl = `/img/heatmap_${bins}_r/${volcanName}.png`
@@ -84,7 +87,16 @@ export default function map() {
         [lat - diff, lon + diff],
         [lat + diff, lon],
       ]
-      var volcanIcon = L.polygon(latlngs, { color: 'grey', fillOpacity: 0, opacity: 0 })
+      // var volcanIcon = L.polygon(latlngs, { color: 'grey', fillOpacity: 0.7, opacity: 0.7 })
+      let latLng = L.latLng(lat, lon)
+      var volcanIcon = L.triangleMarker(latLng, {
+        rotation: 0,
+        width: 20,
+        height: 20,
+        color: volcan.Color,
+        fillColor: '#525252'
+      })
+
       volcanIcon.id = volcan.Name
       volcanIcon.color = volcan.Color
       volcanIcon.isSelected = false
