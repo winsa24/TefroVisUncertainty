@@ -47,8 +47,90 @@ export default function map() {
     _samples = {}
     return map
   }
-
   
+  let myrl;
+  let myMask;
+
+  function drawRLPathRect(){
+    // only draw on selected volcanoes 
+    // loop
+    // volcan is one in the loop 
+    let volcan = _volcanes.Llaima
+    console.log(volcan)
+
+    // get all value in pixel
+    let volcanPos_px = _mapContainer.latLngToContainerPoint(volcan._latlng)
+    let start = volcanPos_px
+    let length = 1000
+    // let k = (volcan.effusive_regression_b == -1 || !volcan.effusive_regression_b)? 0 : volcan.effusive_regression_b
+    let k = 0.35
+    // let b = (volcan.effusive_regression_a == -1 || !volcan.effusive_regression_a)? 0 : volcan.effusive_regression_a
+    // let b = 56.5
+    let b = 0
+    let angle = Math.atan(k)
+    start.y -= b
+    let end = {x: start.x + length * Math.cos(angle), y: start.y - length * Math.sin(angle)}
+    // from pixel to latlng
+    let lineStart = _mapContainer.containerPointToLatLng(start)
+    let lineEnd = _mapContainer.containerPointToLatLng(end)
+
+    if(myrl) _mapContainer.removeLayer(myrl)
+    myrl = L.polyline([lineStart, lineEnd], {color: volcan.color, opacity: 0.7}).addTo(_mapContainer)
+
+    // polygon 4 corner
+    let halfWidth = 10
+    let leftTop = {x: start.x - halfWidth * Math.sin(angle), y: start.y - halfWidth * Math.cos(angle)}
+    let rightTop = {x: end.x - halfWidth * Math.sin(angle), y: end.y - halfWidth * Math.cos(angle)}
+    let leftBottom = {x: start.x + halfWidth * Math.sin(angle), y: start.y + halfWidth * Math.cos(angle)}
+    let rightBottom = {x: end.x + halfWidth * Math.sin(angle), y: end.y + halfWidth * Math.cos(angle)}
+
+    let GeoleftTop = _mapContainer.containerPointToLatLng(leftTop)
+    let GeorightTop = _mapContainer.containerPointToLatLng(rightTop)
+    let GeoleftBottom = _mapContainer.containerPointToLatLng(leftBottom)
+    let GeorightBottom = _mapContainer.containerPointToLatLng(rightBottom)
+    
+    var bounds = [
+      GeoleftTop,
+      GeoleftBottom,
+      GeorightBottom,
+      GeorightTop
+    ];
+
+    var slider = document.getElementById("myRange");
+    var output = document.getElementById("demo");
+
+    if(bins > 50) {
+      if(myMask) _mapContainer.removeLayer(myMask)
+      myMask = L.polygon(bounds, {color: 'gray', weight: 1}).addTo(_mapContainer)
+
+      slider.oninput = function() {
+        output.innerHTML = this.value
+        
+        halfWidth = 10 * this.value
+        leftTop = {x: start.x - halfWidth * Math.sin(angle), y: start.y - halfWidth * Math.cos(angle)}
+        rightTop = {x: end.x - halfWidth * Math.sin(angle), y: end.y - halfWidth * Math.cos(angle)}
+        leftBottom = {x: start.x + halfWidth * Math.sin(angle), y: start.y + halfWidth * Math.cos(angle)}
+        rightBottom = {x: end.x + halfWidth * Math.sin(angle), y: end.y + halfWidth * Math.cos(angle)}
+        // from pixel to latlng
+        GeoleftTop = _mapContainer.containerPointToLatLng(leftTop)
+        GeorightTop = _mapContainer.containerPointToLatLng(rightTop)
+        GeoleftBottom = _mapContainer.containerPointToLatLng(leftBottom)
+        GeorightBottom = _mapContainer.containerPointToLatLng(rightBottom)
+        bounds = [
+          GeoleftTop,
+          GeoleftBottom,
+          GeorightBottom,
+          GeorightTop
+        ];
+  
+        _mapContainer.removeLayer(myMask)
+        myMask = L.polygon(bounds, {color: 'gray', weight: 1}).addTo(_mapContainer)
+      }
+    }
+    
+
+
+  }
   
   let volcanIms = []
   function removeOldIms(){
@@ -86,6 +168,7 @@ export default function map() {
       let volcanIm = L.imageOverlay(imageUrl, imageBounds, {alt: `no plot for ${volcanName}`}).addTo(_mapContainer)
       volcanIms.push(volcanIm)
     }
+    drawRLPathRect()
   }
   map.addVolcanoes = function (volcanes) {
     let SN = []
@@ -140,6 +223,13 @@ export default function map() {
         this.closePopup()
       })
       _volcanes[volcan.Name] = volcanIcon
+      _volcanes[volcan.Name].effusive_regression_b = volcan.effusive_regression_b
+      _volcanes[volcan.Name].effusive_regression_a = volcan.effusive_regression_a
+      _volcanes[volcan.Name].effusive_regression_SampleNumber = volcan.effusive_regression_SampleNumber
+      _volcanes[volcan.Name].bulk_pyroclastic_regression_b = volcan.bulk_pyroclastic_regression_b
+      _volcanes[volcan.Name].bulk_pyroclastic_regression_a = volcan.bulk_pyroclastic_regression_a
+      _volcanes[volcan.Name].bulk_pyroclastic_regression_SampleNumber = volcan.bulk_pyroclastic_regression_SampleNumber
+      _volcanes[volcan.Name].fit_case = volcan.fit_case
       _samples[volcan.Name] = []
     })
     addNewIms()
