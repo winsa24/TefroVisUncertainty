@@ -47,7 +47,73 @@ export default function map() {
     return map
   }
 
-  
+  function drawRLPathRect(){
+    // only draw on selected volcanoes 
+    // loop
+    // volcan is one in the loop 
+    console.log(_volcanes)
+    let volcan = _volcanes.Llaima
+    console.log(volcan)
+    var lat = Number(volcan._bounds._northEast.lat)
+    var lon = Number(volcan._bounds._northEast.lng)
+    var diff = 0.05
+
+    // steep doesn't align
+    let origin = {y: lat - diff/2, x: lon - diff * 4} // longitude => x axis, latitude => y axis
+    let scalek = 0.01
+
+    let effusiveFitCase = ['Case 1', 'Case 2', 'Case 3', 'Case 6', 'Case 7', 'Case 8.1']
+    const match = effusiveFitCase.find(element => {
+      if (element.includes(volcan.fit_case)) {
+        return true;
+      }
+    });
+    console.log(match)
+    let length = 50
+    let k = (volcan.effusive_regression_b == -1 || !volcan.effusive_regression_b)? 0 : volcan.effusive_regression_b
+    let b = (volcan.effusive_regression_a == -1 || !volcan.effusive_regression_a)? 0 : volcan.effusive_regression_a
+    
+    let angle = Math.atan(k)
+    let x1 = 0
+    let y1 = b
+    let x2 = length * Math.cos(angle)
+    let y2 = length * Math.sin(angle) + b
+    
+
+    var latlngs_line = [
+      [origin.y + y1 * scalek * 3, origin.x + x1 * scalek],
+      [origin.y + y2 * scalek * 3, origin.x + x2 * scalek]
+    ]
+    let offset = 0.5
+    var bounds = [
+      [origin.y + y1 * scalek * 3, origin.x + x1 * scalek],
+      [origin.y + y1 * scalek * 3 - offset, origin.x + x1 * scalek + offset],
+      [origin.y + y2 * scalek * 3 - offset, origin.x + x2 * scalek + offset],
+      [origin.y + y2 * scalek * 3, origin.x + x2 * scalek],
+    ];
+
+    L.polygon(bounds, {color: volcan.color, weight: 1}).addTo(_mapContainer);
+    // var polylineEffu = L.polyline(latlngs_line, {color: volcan.color, opacity: 0.7, width: '100px'}).addTo(_mapContainer);
+    
+    let k_bulk = (volcan.bulk_pyroclastic_regression_b == -1 || !volcan.bulk_pyroclastic_regression_b)? 0 : volcan.bulk_pyroclastic_regression_b
+    let b_bulk = (volcan.bulk_pyroclastic_regression_a == -1 || !volcan.bulk_pyroclastic_regression_a)? 0 : volcan.bulk_pyroclastic_regression_a
+    let angle_bulk = Math.atan(k_bulk)
+    let x1_bulk = 0
+    let y1_bulk = b_bulk
+    let x2_bulk = length * Math.cos(angle_bulk)
+    let y2_bulk = length * Math.sin(angle_bulk) + b_bulk
+    // let y2_bulk = k_bulk>0? y1_bulk + length_bulk * Math.cos(angle_bulk): y1_bulk - length * Math.cos(angle_bulk)
+    
+    var latlngs_line_bulk = [
+      [origin.y + y1_bulk * scalek, origin.x + x1_bulk * scalek],
+      [origin.y + y2_bulk * scalek, origin.x + x2_bulk * scalek]
+    ]
+    // var polylineBulk = L.polyline(latlngs_line_bulk, {color: volcan.color, opacity: 0.3}).addTo(_mapContainer);
+
+
+
+
+  }
   
   let volcanIms = []
   function removeOldIms(){
@@ -59,10 +125,10 @@ export default function map() {
     console.log(_volcanes)
     for (const [volcanName, volcan] of Object.entries(_volcanes)) {
       // [0.12, 0.2]=> put image org at the triangle top
-      let lat = Number(volcan._latlng.lat) + 0.12
-      let lon =  Number(volcan._latlng.lng) + 0.2
-      // var lat = Number(volcan._bounds._northEast.lat)
-      // var lon = Number(volcan._bounds._northEast.lng)
+      // let lat = Number(volcan._latlng.lat) + 0.12
+      // let lon =  Number(volcan._latlng.lng) + 0.2
+      var lat = Number(volcan._bounds._northEast.lat)
+      var lon = Number(volcan._bounds._northEast.lng)
       var diff = 0.05
 
       var imageUrl = `/img/heatmap_${bins}_r/${volcanName}.png`
@@ -72,6 +138,7 @@ export default function map() {
       let volcanIm = L.imageOverlay(imageUrl, imageBounds, {alt: `no plot for ${volcanName}`}).addTo(_mapContainer)
       volcanIms.push(volcanIm)
     }
+    drawRLPathRect()
   }
   map.addVolcanoes = function (volcanes) {
     volcanes.forEach(function (volcan, i) {
@@ -87,15 +154,15 @@ export default function map() {
         [lat - diff, lon + diff],
         [lat + diff, lon],
       ]
-      // var volcanIcon = L.polygon(latlngs, { color: 'grey', fillOpacity: 0.7, opacity: 0.7 })
-      let latLng = L.latLng(lat, lon)
-      var volcanIcon = L.triangleMarker(latLng, {
-        rotation: 0,
-        width: 20,
-        height: 20,
-        color: volcan.Color,
-        fillColor: '#525252'
-      })
+      var volcanIcon = L.polygon(latlngs, { color: 'grey', fillOpacity: 0.7, opacity: 0.7 })
+      // let latLng = L.latLng(lat, lon)
+      // var volcanIcon = L.triangleMarker(latLng, {
+      //   rotation: 0,
+      //   width: 20,
+      //   height: 20,
+      //   color: volcan.Color,
+      //   fillColor: '#525252'
+      // })
 
       volcanIcon.id = volcan.Name
       volcanIcon.color = volcan.Color
@@ -131,15 +198,14 @@ export default function map() {
       // group + fill(grayscale(allsampleNumbers)) + RL(1 wrt case) =>  `/img/scatter_plots_fillPolygon_RLcase_group/${volcan.Name}.png`
       // heatmap => heatmap
       // scatter(glass) + cluster + fill(alpha) + RL(1 wrt case) => `/img/scatter_plots_fillPolygon_RLcase_allCluster_scatterGlass/${volcan.Name}.png`
-
-
-      // var imageUrl = `/img/heatmap_${bins}_r/${volcan.Name}.png`
-      // if(['Huanquihue Group', 'Carrán-Los Venados', 'Yanteles', 'Viedma'].indexOf(volcan.Name) >= 0)  imageUrl = `/img/scatter_plots_fillPolygon_RLcase_allCluster_allgrayscale/Corcovado.png`
-      // if(['Puntiagudo', 'Tronador', 'Arenales', 'Aguilera', 'Reclus', 'Fueguino', 'Monte Burney'].indexOf(volcan.Name) >= 0)  imageUrl = `/img/scatter_plots_fillPolygon_RLcase_allCluster_allgrayscale/Corcovado.png`
-      // var imageBounds = [[lat + diff * 2, lon + diff * 4], [lat - diff * 2, lon - diff * 4]]
-      // L.imageOverlay(imageUrl, imageBounds, {alt: `no plot for ${volcan.Name}`}).addTo(_mapContainer)
-
       _volcanes[volcan.Name] = volcanIcon
+      _volcanes[volcan.Name].effusive_regression_b = volcan.effusive_regression_b
+      _volcanes[volcan.Name].effusive_regression_a = volcan.effusive_regression_a
+      _volcanes[volcan.Name].effusive_regression_SampleNumber = volcan.effusive_regression_SampleNumber
+      _volcanes[volcan.Name].bulk_pyroclastic_regression_b = volcan.bulk_pyroclastic_regression_b
+      _volcanes[volcan.Name].bulk_pyroclastic_regression_a = volcan.bulk_pyroclastic_regression_a
+      _volcanes[volcan.Name].bulk_pyroclastic_regression_SampleNumber = volcan.bulk_pyroclastic_regression_SampleNumber
+      _volcanes[volcan.Name].fit_case = volcan.fit_case
       _samples[volcan.Name] = []
     })
     addNewIms()
