@@ -46,6 +46,8 @@ export default function map() {
     _samples = {}
     return map
   }
+  
+  let myrl;
 
   function drawRLPathRect(){
     // only draw on selected volcanoes 
@@ -78,13 +80,12 @@ export default function map() {
     let y1 = b
     let x2 = length * Math.cos(angle)
     let y2 = length * Math.sin(angle) + b
-    
-
+  
     var latlngs_line = [
       [origin.y + y1 * scalek * 3, origin.x + x1 * scalek],
       [origin.y + y2 * scalek * 3, origin.x + x2 * scalek]
     ]
-    let offset = 0.5
+    let offset = 0.01
     var bounds = [
       [origin.y + y1 * scalek * 3, origin.x + x1 * scalek],
       [origin.y + y1 * scalek * 3 - offset, origin.x + x1 * scalek + offset],
@@ -92,8 +93,26 @@ export default function map() {
       [origin.y + y2 * scalek * 3, origin.x + x2 * scalek],
     ];
 
-    L.polygon(bounds, {color: volcan.color, weight: 1}).addTo(_mapContainer);
+    if(myrl) _mapContainer.removeLayer(myrl)
+    myrl = L.polygon(bounds, {color: volcan.color, weight: 1}).addTo(_mapContainer);
     // var polylineEffu = L.polyline(latlngs_line, {color: volcan.color, opacity: 0.7, width: '100px'}).addTo(_mapContainer);
+
+    var slider = document.getElementById("myRange");
+    var output = document.getElementById("demo");
+    slider.oninput = function() {
+      output.innerHTML = this.value; 
+
+      bounds = [
+        [origin.y + y1 * scalek * 3, origin.x + x1 * scalek],
+        [origin.y + y1 * scalek * 3 - offset * this.value, origin.x + x1 * scalek + offset],
+        [origin.y + y2 * scalek * 3 - offset * this.value, origin.x + x2 * scalek + offset],
+        [origin.y + y2 * scalek * 3, origin.x + x2 * scalek],
+      ];
+
+      _mapContainer.removeLayer(myrl)
+      myrl = L.polygon(bounds, {color: volcan.color, weight: 1}).addTo(_mapContainer);
+
+    }
     
     let k_bulk = (volcan.bulk_pyroclastic_regression_b == -1 || !volcan.bulk_pyroclastic_regression_b)? 0 : volcan.bulk_pyroclastic_regression_b
     let b_bulk = (volcan.bulk_pyroclastic_regression_a == -1 || !volcan.bulk_pyroclastic_regression_a)? 0 : volcan.bulk_pyroclastic_regression_a
