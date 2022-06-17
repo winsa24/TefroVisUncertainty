@@ -47,7 +47,43 @@ export default function map() {
     return map
   }
 
-  
+  let myrl;
+  function drawRLPathRect(){
+    // only draw on selected volcanoes 
+    // loop
+    // volcan is one in the loop 
+    console.log(_volcanes)
+    let volcan = _volcanes.Llaima
+    console.log(volcan)
+
+    // steep doesn't align
+    // trnasfer between pixel and latlng
+    // get all value in pixel
+    let volcanPos_px = _mapContainer.latLngToContainerPoint(volcan._latlng)
+    let start = volcanPos_px
+    let length = 100
+    let k = (volcan.effusive_regression_b == -1 || !volcan.effusive_regression_b)? 0 : volcan.effusive_regression_b
+    let b = (volcan.effusive_regression_a == -1 || !volcan.effusive_regression_a)? 0 : volcan.effusive_regression_a
+    let angle = Math.atan(k)
+    start.y -= b
+    let end = {x: start.x + length * Math.cos(angle), y: start.y - length * Math.sin(angle)}
+    
+    // from pixel to latlng
+    let lineStart = _mapContainer.containerPointToLatLng(start)
+    let lineEnd = _mapContainer.containerPointToLatLng(end)
+
+    if(myrl) _mapContainer.removeLayer(myrl)
+    myrl = L.polyline([lineStart, lineEnd], {color: volcan.color, opacity: 0.7}).addTo(_mapContainer);
+
+
+    let effusiveFitCase = ['Case 1', 'Case 2', 'Case 3', 'Case 6', 'Case 7', 'Case 8.1']
+    const match = effusiveFitCase.find(element => {
+      if (element.includes(volcan.fit_case)) {
+        return true;
+      }
+    });
+    
+  }
   
   let volcanIms = []
   function removeOldIms(){
@@ -72,6 +108,7 @@ export default function map() {
       let volcanIm = L.imageOverlay(imageUrl, imageBounds, {alt: `no plot for ${volcanName}`}).addTo(_mapContainer)
       volcanIms.push(volcanIm)
     }
+    drawRLPathRect()
   }
   map.addVolcanoes = function (volcanes) {
     volcanes.forEach(function (volcan, i) {
