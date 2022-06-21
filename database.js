@@ -34,6 +34,7 @@ let createVolcanoes = function (db) {
             Latitude real, 
             Longitude real, 
             Color text,
+            number_of_samples real,
             effusive_regression_a real,
             effusive_regression_b real,
             effusive_regression_SampleNumber real,
@@ -48,11 +49,11 @@ let createVolcanoes = function (db) {
           } else {
             console.log('Creating Volcanoes Table')
             // Table just created, creating some rows
-            var insert = 'INSERT INTO volcano (Name, Latitude, Longitude, Color, effusive_regression_a, effusive_regression_b, effusive_regression_SampleNumber, bulk_pyroclastic_regression_a, bulk_pyroclastic_regression_b, bulk_pyroclastic_regression_SampleNumber, fit_case) VALUES (?,?,?,?,?,?,?,?,?,?,?)'
+            var insert = 'INSERT INTO volcano (Name, Latitude, Longitude, Color, number_of_samples, effusive_regression_a, effusive_regression_b, effusive_regression_SampleNumber, bulk_pyroclastic_regression_a, bulk_pyroclastic_regression_b, bulk_pyroclastic_regression_SampleNumber, fit_case) VALUES (?,?,?,?,?,?,?,?,?,?,?,?)'
             var id = 1;
             for (let v in volcanoes) {
               volcan = volcanoes[v];
-              db.run(insert, [volcan.Volcano, volcan.Latitude, volcan.Longitude, volcan.Color, volcan.effusive_regression_a, volcan.effusive_regression_b, volcan.effusive_regression_SampleNumber, volcan.bulk_pyroclastic_regression_a, volcan.bulk_pyroclastic_regression_b, volcan.bulk_pyroclastic_regression_SampleNumber, volcan.fit_case])
+              db.run(insert, [volcan.Volcano, volcan.Latitude, volcan.Longitude, volcan.Color, volcan.number_of_samples, volcan.effusive_regression_a, volcan.effusive_regression_b, volcan.effusive_regression_SampleNumber, volcan.bulk_pyroclastic_regression_a, volcan.bulk_pyroclastic_regression_b, volcan.bulk_pyroclastic_regression_SampleNumber, volcan.fit_case])
               volcan.id = id
               id += 1
             }
