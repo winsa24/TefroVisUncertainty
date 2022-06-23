@@ -61,9 +61,12 @@ export default function map() {
     // get all value in pixel
     let volcanPos_px = _mapContainer.latLngToContainerPoint(volcan._latlng)
     let start = volcanPos_px
-    let length = 100
-    let k = (volcan.effusive_regression_b == -1 || !volcan.effusive_regression_b)? 0 : volcan.effusive_regression_b
-    let b = (volcan.effusive_regression_a == -1 || !volcan.effusive_regression_a)? 0 : volcan.effusive_regression_a
+    let length = 10000
+    // let k = (volcan.effusive_regression_b == -1 || !volcan.effusive_regression_b)? 0 : volcan.effusive_regression_b
+    let k = 0.35
+    // let b = (volcan.effusive_regression_a == -1 || !volcan.effusive_regression_a)? 0 : volcan.effusive_regression_a
+    // let b = 56.5
+    let b = 0
     let angle = Math.atan(k)
     start.y -= b
     let end = {x: start.x + length * Math.cos(angle), y: start.y - length * Math.sin(angle)}
@@ -95,16 +98,23 @@ export default function map() {
     console.log(_volcanes)
     for (const [volcanName, volcan] of Object.entries(_volcanes)) {
       // [0.12, 0.2]=> put image org at the triangle top
-      let lat = Number(volcan._latlng.lat) + 0.12
-      let lon =  Number(volcan._latlng.lng) + 0.2
-      // var lat = Number(volcan._bounds._northEast.lat)
-      // var lon = Number(volcan._bounds._northEast.lng)
-      var diff = 0.05
+      // let lat = Number(volcan._latlng.lat) + 0.12
+      // let lon =  Number(volcan._latlng.lng) + 0.2
+      // var diff = 0.05
+
+      let start = _mapContainer.latLngToContainerPoint(volcan._latlng)
+     
+      let end = {x: start.x + 122, y: start.y - 96.6}
+      
+      // from pixel to latlng
+      let lineStart = _mapContainer.containerPointToLatLng(start)
+      let lineEnd = _mapContainer.containerPointToLatLng(end)
 
       var imageUrl = `/img/heatmap_${bins}_r/${volcanName}.png`
       if(['Huanquihue Group', 'Carrán-Los Venados', 'Yanteles', 'Viedma'].indexOf(volcanName) >= 0)  imageUrl = `/img/scatter_plots_fillPolygon_RLcase_allCluster_allgrayscale/Corcovado.png`
       if(['Puntiagudo', 'Tronador', 'Arenales', 'Aguilera', 'Reclus', 'Fueguino', 'Monte Burney'].indexOf(volcanName) >= 0)  imageUrl = `/img/scatter_plots_fillPolygon_RLcase_allCluster_allgrayscale/Corcovado.png`
-      var imageBounds = [[lat + diff * 2, lon + diff * 4], [lat - diff * 2, lon - diff * 4]]
+      // var imageBounds = [[lat + diff * 2, lon + diff * 4], [lat - diff * 2, lon - diff * 4]]
+      var imageBounds = [lineStart, lineEnd]
       let volcanIm = L.imageOverlay(imageUrl, imageBounds, {alt: `no plot for ${volcanName}`}).addTo(_mapContainer)
       volcanIms.push(volcanIm)
     }
