@@ -67,6 +67,7 @@ export default function map() {
       var diff = 0.05
 
       var imageUrl = `/img/heatmap_${bins}_Reds/${volcanName}.png`
+      if(bins == 100) imageUrl = `/img/heatmap_${bins}_Reds_v2/${volcanName}.png`
       if(['Huanquihue Group', 'Carrán-Los Venados', 'Yanteles', 'Viedma'].indexOf(volcanName) >= 0)  imageUrl = `/img/heatmap_2_Reds/Corcovado.png`
       if(['Puntiagudo', 'Tronador', 'Arenales', 'Aguilera', 'Reclus', 'Fueguino', 'Monte Burney'].indexOf(volcanName) >= 0)  imageUrl = `/img/heatmap_2_Reds/Corcovado.png`
       var imageBounds = [[lat + diff * 2, lon + diff * 4], [lat - diff * 2, lon - diff * 4]]
