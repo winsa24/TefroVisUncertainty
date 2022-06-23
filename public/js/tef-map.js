@@ -48,88 +48,69 @@ export default function map() {
   }
   
   let myrl;
+  let myMask;
 
   function drawRLPathRect(){
     // only draw on selected volcanoes 
     // loop
     // volcan is one in the loop 
-    console.log(_volcanes)
     let volcan = _volcanes.Llaima
     console.log(volcan)
-    var lat = Number(volcan._bounds._northEast.lat)
-    var lon = Number(volcan._bounds._northEast.lng)
-    var diff = 0.05
 
     // steep doesn't align
-    let origin = {y: lat - diff/2, x: lon - diff * 4} // longitude => x axis, latitude => y axis
-    let scalek = 0.01
-
-    let effusiveFitCase = ['Case 1', 'Case 2', 'Case 3', 'Case 6', 'Case 7', 'Case 8.1']
-    const match = effusiveFitCase.find(element => {
-      if (element.includes(volcan.fit_case)) {
-        return true;
-      }
-    });
-    console.log(match)
-    let length = 50
-    let k = (volcan.effusive_regression_b == -1 || !volcan.effusive_regression_b)? 0 : volcan.effusive_regression_b
-    let b = (volcan.effusive_regression_a == -1 || !volcan.effusive_regression_a)? 0 : volcan.effusive_regression_a
-    
+    // trnasfer between pixel and latlng
+    // get all value in pixel
+    let volcanPos_px = _mapContainer.latLngToContainerPoint(volcan._latlngs[0][0])
+    let start = volcanPos_px
+    let length = 1000
+    // let k = (volcan.effusive_regression_b == -1 || !volcan.effusive_regression_b)? 0 : volcan.effusive_regression_b
+    let k = 0.35
+    // let b = (volcan.effusive_regression_a == -1 || !volcan.effusive_regression_a)? 0 : volcan.effusive_regression_a
+    // let b = 56.5
+    let b = 0
     let angle = Math.atan(k)
-    let x1 = 0
-    let y1 = b
-    let x2 = length * Math.cos(angle)
-    let y2 = length * Math.sin(angle) + b
-  
-    var latlngs_line = [
-      [origin.y + y1 * scalek * 3, origin.x + x1 * scalek],
-      [origin.y + y2 * scalek * 3, origin.x + x2 * scalek]
-    ]
-    let offset = 0.01
-    var bounds = [
-      [origin.y + y1 * scalek * 3, origin.x + x1 * scalek],
-      [origin.y + y1 * scalek * 3 - offset, origin.x + x1 * scalek + offset],
-      [origin.y + y2 * scalek * 3 - offset, origin.x + x2 * scalek + offset],
-      [origin.y + y2 * scalek * 3, origin.x + x2 * scalek],
-    ];
+    start.y -= b
+    let end = {x: start.x + length * Math.cos(angle), y: start.y - length * Math.sin(angle)}
+    
+    // polygon 4 corner
+    let halfWidth = 100
+    let leftTop = {x: start.x - halfWidth * Math.sin(angle), y: start.y - halfWidth * Math.cos(angle)}
+    let rightTop = {x: end.x - halfWidth * Math.sin(angle), y: end.y - halfWidth * Math.cos(angle)}
+
+    // from pixel to latlng
+    let lineStart = _mapContainer.containerPointToLatLng(start)
+    let lineEnd = _mapContainer.containerPointToLatLng(end)
+    let GeoleftTop = _mapContainer.containerPointToLatLng(leftTop)
+    let GeorightTop = _mapContainer.containerPointToLatLng(rightTop)
 
     if(myrl) _mapContainer.removeLayer(myrl)
-    myrl = L.polygon(bounds, {color: volcan.color, weight: 1}).addTo(_mapContainer);
-    // var polylineEffu = L.polyline(latlngs_line, {color: volcan.color, opacity: 0.7, width: '100px'}).addTo(_mapContainer);
+    myrl = L.polyline([lineStart, lineEnd], {color: volcan.color, opacity: 0.7}).addTo(_mapContainer)
+
+    var bounds = [
+      GeoleftTop,
+      lineStart,
+      lineEnd,
+      GeorightTop
+    ];
+
+    if(myMask) _mapContainer.removeLayer(myMask)
+    myMask = L.polygon(bounds, {color: volcan.color, weight: 1}).addTo(_mapContainer);
 
     var slider = document.getElementById("myRange");
     var output = document.getElementById("demo");
     slider.oninput = function() {
       output.innerHTML = this.value; 
 
-      bounds = [
-        [origin.y + y1 * scalek * 3, origin.x + x1 * scalek],
-        [origin.y + y1 * scalek * 3 - offset * this.value, origin.x + x1 * scalek + offset],
-        [origin.y + y2 * scalek * 3 - offset * this.value, origin.x + x2 * scalek + offset],
-        [origin.y + y2 * scalek * 3, origin.x + x2 * scalek],
-      ];
+      // bounds = [
+      //   [origin.y + y1 * scalek * 3, origin.x + x1 * scalek],
+      //   [origin.y + y1 * scalek * 3 - offset * this.value, origin.x + x1 * scalek + offset],
+      //   [origin.y + y2 * scalek * 3 - offset * this.value, origin.x + x2 * scalek + offset],
+      //   [origin.y + y2 * scalek * 3, origin.x + x2 * scalek],
+      // ];
 
-      _mapContainer.removeLayer(myrl)
-      myrl = L.polygon(bounds, {color: volcan.color, weight: 1}).addTo(_mapContainer);
-
+      _mapContainer.removeLayer(myMask)
+      myMask = L.polygon(bounds, {color: volcan.color, weight: 1}).addTo(_mapContainer);
     }
-    
-    let k_bulk = (volcan.bulk_pyroclastic_regression_b == -1 || !volcan.bulk_pyroclastic_regression_b)? 0 : volcan.bulk_pyroclastic_regression_b
-    let b_bulk = (volcan.bulk_pyroclastic_regression_a == -1 || !volcan.bulk_pyroclastic_regression_a)? 0 : volcan.bulk_pyroclastic_regression_a
-    let angle_bulk = Math.atan(k_bulk)
-    let x1_bulk = 0
-    let y1_bulk = b_bulk
-    let x2_bulk = length * Math.cos(angle_bulk)
-    let y2_bulk = length * Math.sin(angle_bulk) + b_bulk
-    // let y2_bulk = k_bulk>0? y1_bulk + length_bulk * Math.cos(angle_bulk): y1_bulk - length * Math.cos(angle_bulk)
-    
-    var latlngs_line_bulk = [
-      [origin.y + y1_bulk * scalek, origin.x + x1_bulk * scalek],
-      [origin.y + y2_bulk * scalek, origin.x + x2_bulk * scalek]
-    ]
-    // var polylineBulk = L.polyline(latlngs_line_bulk, {color: volcan.color, opacity: 0.3}).addTo(_mapContainer);
-
-
 
 
   }
