@@ -40,6 +40,10 @@ export default function map() {
   
       removeOldIms()
       addNewIms()
+      if(bins > 50) {
+        if(myMasks.length < 1) drawRLPathRect()
+      }
+      else removeOldMasks()
     })
 
     _volcanes = {}
@@ -47,85 +51,102 @@ export default function map() {
     return map
   }
   
-  let myrl; // my volcano regression line
-  let myMask; // my volcano filter mask
+  let myrls = []; // my volcano regression line
+  let myMasks = []; // my volcano filter mask
+  function removeOldMasks(){
+    myrls.forEach(function (m) {
+      _mapContainer.removeLayer(m)
+    })
+    myMasks.forEach(function (m) {
+      _mapContainer.removeLayer(m)
+    })
+    myrls = []
+    myMasks = []
+  }
 
   function drawRLPathRect(){
     // only draw on selected volcanoes 
     // loop
     // volcan is one in the loop 
-    let volcan = _volcanes.Llaima
-    
-    let volcanIm_latlng = volcan.image._bounds._southWest
-    // get all value in pixel
-    let start = _mapContainer.latLngToContainerPoint(volcanIm_latlng)
-    let length = 10 * bins // TODO::
-    // let k = (volcan.effusive_regression_b == -1 || !volcan.effusive_regression_b)? 0 : volcan.effusive_regression_b
-    let k = 0.35
-    // let b = (volcan.effusive_regression_a == -1 || !volcan.effusive_regression_a)? 0 : volcan.effusive_regression_a
-    // let b = 56.5
-    let b = 0
-    let angle = Math.atan(k)
-    start.y -= b
-    let end = {x: start.x + length * Math.cos(angle), y: start.y - length * Math.sin(angle)}
-    // from pixel to latlng
-    let lineStart = _mapContainer.containerPointToLatLng(start)
-    let lineEnd = _mapContainer.containerPointToLatLng(end)
-
-    if(myrl) _mapContainer.removeLayer(myrl)
-    myrl = L.polyline([lineStart, lineEnd], {color: volcan.color, opacity: 0.7}).addTo(_mapContainer)
-
-    // polygon 4 corner
-    let halfWidth = 10
-    let leftTop = {x: start.x - halfWidth * Math.sin(angle), y: start.y - halfWidth * Math.cos(angle)}
-    let rightTop = {x: end.x - halfWidth * Math.sin(angle), y: end.y - halfWidth * Math.cos(angle)}
-    let leftBottom = {x: start.x + halfWidth * Math.sin(angle), y: start.y + halfWidth * Math.cos(angle)}
-    let rightBottom = {x: end.x + halfWidth * Math.sin(angle), y: end.y + halfWidth * Math.cos(angle)}
-
-    let GeoleftTop = _mapContainer.containerPointToLatLng(leftTop)
-    let GeorightTop = _mapContainer.containerPointToLatLng(rightTop)
-    let GeoleftBottom = _mapContainer.containerPointToLatLng(leftBottom)
-    let GeorightBottom = _mapContainer.containerPointToLatLng(rightBottom)
-    
-    var bounds = [
-      GeoleftTop,
-      GeoleftBottom,
-      GeorightBottom,
-      GeorightTop
-    ];
-
-    var slider = document.getElementById("myRange");
-    var output = document.getElementById("demo");
-    if(myMask) _mapContainer.removeLayer(myMask)
-    myMask = L.polygon(bounds, {color: 'gray', weight: 1}).addTo(_mapContainer)
-
-    slider.oninput = function() {
-      output.innerHTML = this.value
-      start = _mapContainer.latLngToContainerPoint(lineStart)
-      end = _mapContainer.latLngToContainerPoint(lineEnd)
-      
-      halfWidth = 10 * this.value
-      leftTop = {x: start.x - halfWidth * Math.sin(angle), y: start.y - halfWidth * Math.cos(angle)}
-      rightTop = {x: end.x - halfWidth * Math.sin(angle), y: end.y - halfWidth * Math.cos(angle)}
-      leftBottom = {x: start.x + halfWidth * Math.sin(angle), y: start.y + halfWidth * Math.cos(angle)}
-      rightBottom = {x: end.x + halfWidth * Math.sin(angle), y: end.y + halfWidth * Math.cos(angle)}
+    for (const [volcanName, volcan] of Object.entries(_volcanes)) {
+      let volcanIm_latlng = volcan.image._bounds._southWest
+      // get all value in pixel
+      let start = _mapContainer.latLngToContainerPoint(volcanIm_latlng)
+      let length = 650 
+      let k = (volcan.effusive_regression_b == -1 || !volcan.effusive_regression_b)? 0 : volcan.effusive_regression_b
+      // let k = 0.35
+      let b = (volcan.effusive_regression_a == -1 || !volcan.effusive_regression_a)? 0 : volcan.effusive_regression_a
+      // let b = 56.5
+      // let b = 0 
+      let angle = Math.atan(k)
+      start.y -= b
+      let end = {x: start.x + length * Math.cos(angle), y: start.y - length * Math.sin(angle)}
       // from pixel to latlng
-      GeoleftTop = _mapContainer.containerPointToLatLng(leftTop)
-      GeorightTop = _mapContainer.containerPointToLatLng(rightTop)
-      GeoleftBottom = _mapContainer.containerPointToLatLng(leftBottom)
-      GeorightBottom = _mapContainer.containerPointToLatLng(rightBottom)
-      bounds = [
+      let lineStart = _mapContainer.containerPointToLatLng(start)
+      let lineEnd = _mapContainer.containerPointToLatLng(end)
+
+      // polygon 4 corner
+      let halfWidth = 10
+      let leftTop = {x: start.x - halfWidth * Math.sin(angle), y: start.y - halfWidth * Math.cos(angle)}
+      let rightTop = {x: end.x - halfWidth * Math.sin(angle), y: end.y - halfWidth * Math.cos(angle)}
+      let leftBottom = {x: start.x + halfWidth * Math.sin(angle), y: start.y + halfWidth * Math.cos(angle)}
+      let rightBottom = {x: end.x + halfWidth * Math.sin(angle), y: end.y + halfWidth * Math.cos(angle)}
+
+      let GeoleftTop = _mapContainer.containerPointToLatLng(leftTop)
+      let GeorightTop = _mapContainer.containerPointToLatLng(rightTop)
+      let GeoleftBottom = _mapContainer.containerPointToLatLng(leftBottom)
+      let GeorightBottom = _mapContainer.containerPointToLatLng(rightBottom)
+      
+      var bounds = [
         GeoleftTop,
         GeoleftBottom,
         GeorightBottom,
         GeorightTop
       ];
 
-      _mapContainer.removeLayer(myMask)
-      myMask = L.polygon(bounds, {color: 'gray', weight: 1}).addTo(_mapContainer)
+      let myrl = L.polyline([lineStart, lineEnd], {color: volcan.color, opacity: 0.7}).addTo(_mapContainer)
+      myrls.push(myrl)
+      _volcanes[volcanName].myRL = myrl
+      let myMask = L.polygon(bounds, {color: 'gray', weight: 1}).addTo(_mapContainer)
+      myMasks.push(myMask)
+      _volcanes[volcanName].myMask = myMask
     }
+    filterSize()
+  }
 
-
+  function filterSize(){
+    var slider = document.getElementById("myRange");
+    var output = document.getElementById("demo");
+    slider.oninput = function() {
+      output.innerHTML = this.value
+      removeOldMasks()
+      for (const [volcanName, volcan] of Object.entries(_volcanes)) {
+        let start = _mapContainer.latLngToContainerPoint(volcan.myRL._bounds._southWest)
+        let end = _mapContainer.latLngToContainerPoint(volcan.myRL._bounds._northEast)
+        let k = (volcan.effusive_regression_b == -1 || !volcan.effusive_regression_b)? 0 : volcan.effusive_regression_b
+        let angle = Math.atan(k)
+        
+        let halfWidth = 10 * this.value
+        let leftTop = {x: start.x - halfWidth * Math.sin(angle), y: start.y - halfWidth * Math.cos(angle)}
+        let rightTop = {x: end.x - halfWidth * Math.sin(angle), y: end.y - halfWidth * Math.cos(angle)}
+        let leftBottom = {x: start.x + halfWidth * Math.sin(angle), y: start.y + halfWidth * Math.cos(angle)}
+        let rightBottom = {x: end.x + halfWidth * Math.sin(angle), y: end.y + halfWidth * Math.cos(angle)}
+        // from pixel to latlng
+        let GeoleftTop = _mapContainer.containerPointToLatLng(leftTop)
+        let GeorightTop = _mapContainer.containerPointToLatLng(rightTop)
+        let GeoleftBottom = _mapContainer.containerPointToLatLng(leftBottom)
+        let GeorightBottom = _mapContainer.containerPointToLatLng(rightBottom)
+        let bounds = [
+          GeoleftTop,
+          GeoleftBottom,
+          GeorightBottom,
+          GeorightTop
+        ];
+        let myMask = L.polygon(bounds, {color: 'gray', weight: 1}).addTo(_mapContainer)
+        myMasks.push(myMask)
+        _volcanes[volcanName].myMask = myMask
+      }
+    }
   }
   
   let volcanIms = []
@@ -159,7 +180,6 @@ export default function map() {
       }
       else{
         imageBounds = [[lat + diff * 2, lon + diff * 4], [lat - diff * 2, lon - diff * 4]]
-        drawRLPathRect()
       }
       let volcanIm = L.imageOverlay(imageUrl, imageBounds, {alt: `no plot for ${volcanName}`}).addTo(_mapContainer)
       volcanIms.push(volcanIm)
