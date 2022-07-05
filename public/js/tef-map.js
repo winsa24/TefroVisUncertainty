@@ -76,16 +76,20 @@ export default function map() {
     return {'lat': start.lat + yOffset, 'lng': start.lng + xOffset}
   }
 
+  const volcanNameList = ['Llaima','Sollipulli','Caburga_Huelemolle','Villarrica','Quetrupillán','Lanín','Mocho_Choshuenco','Puyehue_Cordón_Caulle','Antillanca_Casablanca','Osorno','Calbuco','Yate','Apagado','Hornopirén','Huequi','Michinmahuida','Chaitén','Corcovado','Melimoyu','Mentolat','Cay','Macá','Hudson','Lautaro','Aguilera','Reclus','Monte_Burney']
+
   var tails = [];
-  function drawSampleTail(sampleArray){
+  function drawSampleTail(sampleArray,threshold = 0.01){
     tails.forEach(function (item) {
       _mapContainer.removeLayer(item)
     });
+    // tail on assigned volcano
     sampleArray.forEach((s)=>{
       const sampleCenter = s._latlng
       const volcanoBelongCenter = _volcanes[s.volcano]._latlngs[0][2]
       // if sample radius is [uncertainty] value
-      const tailLength = s._mRadius / 20000
+      const assVolcano = volcanNameList.filter(v => v.substring(0,3) === s.volcano.substring(0,3))
+      const tailLength = s.distoAllVolcan[assVolcano]  // TODO:: scale
       const endTail = getPosWithin2Points(sampleCenter, volcanoBelongCenter, tailLength)
       
       let tail = L.polyline([sampleCenter, endTail], {color: '#000', weight: 1}) // longer line bigger distance to RL
@@ -101,21 +105,30 @@ export default function map() {
     // fake tail to other volcano
     sampleArray.forEach((s)=>{
       const sampleCenter = s._latlng
-      const randomVolcano = Object.values(_volcanes)[Math.floor(Math.random() * Object.keys(_volcanes).length)]
-      console.log(randomVolcano)
-      const volcanoBelongCenter = randomVolcano._latlngs[0][2]
-      // if sample radius is [uncertainty] value
-      const tailLength = Math.random() * 0.03 // random [0,1]
-      const endTail = getPosWithin2Points(sampleCenter, volcanoBelongCenter, tailLength)
+      const disToAll = s.distoAllVolcan
+      const potentialVolcanoes = Object.keys(disToAll).filter(key => disToAll[key] < threshold)
+      potentialVolcanoes.forEach(v=>{
+        let volcanoName= v.replaceAll("_", "-")
+        switch(volcanoName){
+          case "Monte-Burney" : volcanoName = "Monte Burney"; break
+          case "Puyehue-Cordón-Caulle": volcanoName = "Puyehue-Cordón Caulle"; break;
+        }
+        const assVolcano = _volcanes[volcanoName]
+        const volcanoBelongCenter = assVolcano._latlngs[0][2]
+        // if sample radius is [uncertainty] value
+        const tailLength = disToAll[v] * 100 // TODO:: scale
+        const endTail = getPosWithin2Points(sampleCenter, volcanoBelongCenter, tailLength)
+        
+        let tail = L.polyline([sampleCenter, endTail], {color: assVolcano.color, weight: 1}) // longer line bigger distance to RL
+          .addTo(_mapContainer)
+          .on('click', function (e) {
+            // interaction...
+            // shiftViewport()
+            // ...
+          })   
+        tails.push(tail)
+      })
       
-      let tail = L.polyline([sampleCenter, endTail], {color: randomVolcano.color, weight: 1}) // longer line bigger distance to RL
-        .addTo(_mapContainer)
-        .on('click', function (e) {
-          // interaction...
-          // shiftViewport()
-          // ...
-        })   
-      tails.push(tail)
       // use arrow : https://www.npmjs.com/package/leaflet-canvas-markers  ==> (can't change length) 
     })
   }
@@ -184,6 +197,36 @@ export default function map() {
       newCircle.event = m.Event
       newCircle.volcano = m.Volcano
       newCircle.isVisible = true
+      newCircle.distoAllVolcan = {
+        Llaima : m.Llaima,
+        Sollipulli :  m.Sollipulli,
+        Caburga_Huelemolle :  m.Caburga_Huelemolle,
+        Villarrica :  m.Villarrica,
+        Quetrupillán:  m.Quetrupillán,
+        Lanín :  m.Lanín,
+        Puyehue_Cordón_Caulle : m.Puyehue_Cordón_Caulle,
+        Antillanca_Casablanca :  m.Antillanca_Casablanca,
+        Osorno:  m.Osorno,
+        Calbuco:  m.Calbuco,
+        Yate : m.Yate,
+        Hornopirén:  m.Hornopirén,
+        Huequi: m.Huequi,
+        Michinmahuida:  m.Michinmahuida,
+        Chaitén:  m.Chaitén,
+        Corcovado: m.Corcovado,
+        Melimoyu:  m.Melimoyu,
+        Mentolat:  m.Mentolat,
+        Cay:  m.Cay,
+        Macá: m.Macá,
+        Hudson:  m.Hudson,
+        Lautaro:  m.Lautaro,
+        Aguilera: m.Aguilera,
+        Reclus:  m.Reclus,
+        Monte_Burney:  m.Monte_Burney,
+        Apagado:m.Apagado,
+        Mocho_Choshuenco: m.Mocho_Choshuenco
+      }
+        
       _samples[m.Volcano].push(newCircle)
     })
   }
