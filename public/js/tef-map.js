@@ -73,10 +73,10 @@ export default function map() {
       // get all value in pixel
       let start = _mapContainer.latLngToContainerPoint(volcanIm_latlng)
       let length = 650 
-      let k = (volcan.effusive_regression_b == -1 || !volcan.effusive_regression_b)? 0 : volcan.effusive_regression_b
-      // let k = 0.35
-      let b = (volcan.effusive_regression_a == -1 || !volcan.effusive_regression_a)? 0 : volcan.effusive_regression_a
-      // let b = 56.5
+      // let k = (volcan.effusive_regression_b == -1 || !volcan.effusive_regression_b)? 0 : volcan.effusive_regression_b
+      let k = 0.35
+      // let b = (volcan.effusive_regression_a == -1 || !volcan.effusive_regression_a)? 0 : volcan.effusive_regression_a
+      let b = 56.5
       // let b = 0 
       let angle = Math.atan(k)
       start.y -= b
@@ -177,9 +177,12 @@ export default function map() {
       let imageBounds;
       if(bins < 50){
         imageBounds = [lineStart, lineEnd]
+        // console.log(imageBounds)
       }
       else{
-        imageBounds = [[lat + diff * 2, lon + diff * 4], [lat - diff * 2, lon - diff * 4]]
+        imageBounds = [[lat + 0.2, lon + 0.3], [lat - diff * 2, lon - diff * 4]]
+        // console.log(">>>>>>>>")
+        // console.log(imageBounds)
       }
       let volcanIm = L.imageOverlay(imageUrl, imageBounds, {alt: `no plot for ${volcanName}`}).addTo(_mapContainer)
       volcanIms.push(volcanIm)
