@@ -14,10 +14,26 @@ export default function map() {
   var imgHeight = 316
 
   let bins = 10;
+  let myrls = []; // my volcano regression line
+  let myMasks = []; // my volcano filter mask
+  function removeOldMasks() {
+    myMasks.forEach(function (m) {
+      _mapContainer.removeLayer(m)
+    })
+    myMasks = []
+  }
 
   // INITIALIZATION
   map.init = function (tef) {
 
+    var slider = document.getElementById("myRange");
+    var output = document.getElementById("demo");
+    slider.oninput = function () {
+      output.innerHTML = this.value
+      removeOldMasks()
+      drawMask(10* this.value)
+    }
+    
     _tef = tef
     const mbAttr =
       'Map data &copy <a href="https://www.openstreetmap.org/">OpenStreetMap</a> contributors, ' +
@@ -46,7 +62,10 @@ export default function map() {
       removeOldIms()
       addNewIms()
       if (bins > 50) {
-        if (myMasks.length < 1) drawRLPathRect()
+        if (myMasks.length < 1) {
+          drawRL()
+          drawMask()
+        }
       }
       else removeOldMasks()
     })
@@ -56,26 +75,14 @@ export default function map() {
     return map
   }
 
-  let myrls = []; // my volcano regression line
-  let myMasks = []; // my volcano filter mask
-  function removeOldMasks() {
-    myrls.forEach(function (m) {
-      _mapContainer.removeLayer(m)
-    })
-    myMasks.forEach(function (m) {
-      _mapContainer.removeLayer(m)
-    })
-    myrls = []
-    myMasks = []
-  }
-
-  function drawRLPathRect() {
+  function drawRL() {
     // only draw on selected volcanoes 
     // loop
     // volcan is one in the loop 
     myrls.forEach(function (m) {
       _mapContainer.removeLayer(m)
     })
+    myrls = []
     for (const [volcanName, volcan] of Object.entries(_volcanes)) {
       //let volcanIm_latlng = volcan.image._bounds._southWest
       // get all value in pixel
@@ -83,8 +90,6 @@ export default function map() {
 
       // GET THE STARTING POINT FOR EACH IMAGE
       let startRaw = _mapContainer.latLngToContainerPoint(volcan._latlng)
-
-      
 
       let length = 650
       if(!volcan.k) continue
@@ -97,14 +102,24 @@ export default function map() {
       let startLatLng = _mapContainer.containerPointToLatLng(start)
 
       let angle = Math.atan(k)
-      //start.y -= b
       let end = { x: start.x + length * Math.cos(angle), y: start.y - length * Math.sin(angle) }
       // from pixel to latlng
       let lineStart = _mapContainer.containerPointToLatLng(start)
       let lineEnd = _mapContainer.containerPointToLatLng(end)
+      let myrl = L.polyline([lineStart, lineEnd], { color: volcan.color, opacity: 0.7, angle: angle }).addTo(_mapContainer)
+      myrls.push(myrl)
+      _volcanes[volcanName].myRL = myrl      
+    }
+  }
+
+  function drawMask(halfWidth = 10){
+    removeOldMasks()
+    myrls.forEach(myRL => {
+      let start = _mapContainer.latLngToContainerPoint(myRL._bounds._southWest)
+      let end = _mapContainer.latLngToContainerPoint(myRL._bounds._northEast)
+      let angle = myRL.options.angle
 
       // polygon 4 corner
-      let halfWidth = 10
       let leftTop = { x: start.x - halfWidth * Math.sin(angle), y: start.y - halfWidth * Math.cos(angle) }
       let rightTop = { x: end.x - halfWidth * Math.sin(angle), y: end.y - halfWidth * Math.cos(angle) }
       let leftBottom = { x: start.x + halfWidth * Math.sin(angle), y: start.y + halfWidth * Math.cos(angle) }
@@ -122,14 +137,10 @@ export default function map() {
         GeorightTop
       ];
 
-      let myrl = L.polyline([lineStart, lineEnd], { color: volcan.color, opacity: 0.7 }).addTo(_mapContainer)
-      myrls.push(myrl)
-      _volcanes[volcanName].myRL = myrl
-      /*let myMask = L.polygon(bounds, { color: 'gray', weight: 1 }).addTo(_mapContainer)
+      let myMask = L.polygon(bounds, { color: 'gray', weight: 1 }).addTo(_mapContainer)
       myMasks.push(myMask)
-      _volcanes[volcanName].myMask = myMask*/
-    }
-    filterSize()
+      // _volcanes[volcanName].myMask = myMask
+    })
   }
 
   function filterSize() {
@@ -138,10 +149,12 @@ export default function map() {
     slider.oninput = function () {
       output.innerHTML = this.value
       removeOldMasks()
-      for (const [volcanName, volcan] of Object.entries(_volcanes)) {
+      drawMask(10* this.value)
+      /*for (const [volcanName, volcan] of Object.entries(_volcanes)) {
+        if(!volcan.k) continue
         let start = _mapContainer.latLngToContainerPoint(volcan.myRL._bounds._southWest)
         let end = _mapContainer.latLngToContainerPoint(volcan.myRL._bounds._northEast)
-        let k = (volcan.effusive_regression_b == -1 || !volcan.effusive_regression_b) ? 0 : volcan.effusive_regression_b
+        let k = volcan.k
         let angle = Math.atan(k)
 
         let halfWidth = 10 * this.value
@@ -163,7 +176,7 @@ export default function map() {
         let myMask = L.polygon(bounds, { color: 'gray', weight: 1 }).addTo(_mapContainer)
         myMasks.push(myMask)
         _volcanes[volcanName].myMask = myMask
-      }
+      }*/
     }
   }
 
