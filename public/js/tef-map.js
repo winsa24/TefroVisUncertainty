@@ -205,15 +205,15 @@ export default function map() {
       if (['Puntiagudo', 'Tronador', 'Arenales', 'Aguilera', 'Reclus', 'Fueguino', 'Monte Burney'].indexOf(volcanName) >= 0) imageUrl = `/img/blank.png`
       let imageBounds;
       if (bins < 50) {
-        //imageBounds = [lineStart, lineEnd]
+        // imagePixelBounds = { x: start.x + imgWidth * 0.5, y: start.y + imgHeight *0.5}
+        start.y += imgHeight * 0.5
+        imagePixelBounds.x -= imgWidth * 0.5
+        startLatLng = _mapContainer.containerPointToLatLng(start)
+        imageEnd = _mapContainer.containerPointToLatLng(imagePixelBounds)
         imageBounds = [startLatLng, imageEnd]
-        // console.log(imageBounds)
       }
       else {
-        //imageBounds = [[lat + 0.2, lon + 0.3], [lat - diff * 2, lon - diff * 4]]
         imageBounds = [startLatLng, imageEnd]
-        // console.log(">>>>>>>>")
-        // console.log(imageBounds)
       }
       let volcanIm = L.imageOverlay(imageUrl, imageBounds, { alt: `no plot for ${volcanName}` }).addTo(_mapContainer)
       volcanIms.push(volcanIm)
