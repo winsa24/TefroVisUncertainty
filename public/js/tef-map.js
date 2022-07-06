@@ -73,6 +73,9 @@ export default function map() {
     // only draw on selected volcanoes 
     // loop
     // volcan is one in the loop 
+    myrls.forEach(function (m) {
+      _mapContainer.removeLayer(m)
+    })
     for (const [volcanName, volcan] of Object.entries(_volcanes)) {
       //let volcanIm_latlng = volcan.image._bounds._southWest
       // get all value in pixel
@@ -84,12 +87,10 @@ export default function map() {
       
 
       let length = 650
-      // let k = (volcan.effusive_regression_b == -1 || !volcan.effusive_regression_b)? 0 : volcan.effusive_regression_b
-      //let k = 0.35
-      let k = 0.35
-      // let b = (volcan.effusive_regression_a == -1 || !volcan.effusive_regression_a)? 0 : volcan.effusive_regression_a
-      let b = 19.6// - imgHeight
-      // let b = 0 
+      if(!volcan.k) continue
+      let k = volcan.k
+      let b = (!volcan.b)? 0 : volcan.b
+      // let b = 19.6// - imgHeight
       // I MOVE THE STARTING POINT UP SO THE LEFT BOTTOM
       // CORNER ALIGNS WITH THE TIP OF THE VOLCANO TRIANGLE
       let start = { x: startRaw.x, y: startRaw.y - b}
@@ -273,13 +274,9 @@ export default function map() {
         this.closePopup()
       })
       _volcanes[volcan.Name] = volcanIcon
-      _volcanes[volcan.Name].effusive_regression_b = volcan.effusive_regression_b
-      _volcanes[volcan.Name].effusive_regression_a = volcan.effusive_regression_a
-      _volcanes[volcan.Name].effusive_regression_SampleNumber = volcan.effusive_regression_SampleNumber
-      _volcanes[volcan.Name].bulk_pyroclastic_regression_b = volcan.bulk_pyroclastic_regression_b
-      _volcanes[volcan.Name].bulk_pyroclastic_regression_a = volcan.bulk_pyroclastic_regression_a
-      _volcanes[volcan.Name].bulk_pyroclastic_regression_SampleNumber = volcan.bulk_pyroclastic_regression_SampleNumber
-      _volcanes[volcan.Name].fit_case = volcan.fit_case
+      _volcanes[volcan.Name].k = volcan.k
+      _volcanes[volcan.Name].b = volcan.b
+      _volcanes[volcan.Name].number_of_samples = volcan.number_of_samples
       _samples[volcan.Name] = []
     })
     addNewIms()
