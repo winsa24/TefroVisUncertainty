@@ -78,6 +78,13 @@ export default function map() {
 
   const volcanNameList = ['Llaima','Sollipulli','Caburga_Huelemolle','Villarrica','Quetrupillán','Lanín','Mocho_Choshuenco','Puyehue_Cordón_Caulle','Antillanca_Casablanca','Osorno','Calbuco','Yate','Apagado','Hornopirén','Huequi','Michinmahuida','Chaitén','Corcovado','Melimoyu','Mentolat','Cay','Macá','Hudson','Lautaro','Aguilera','Reclus','Monte_Burney']
 
+  function mapTailLength (value, oldRange, newRange) { // newRange : [2,1]
+
+    let perc = (value - oldRange[0]) / (oldRange[1] - oldRange[0])
+    let newValue = (newRange[0] - newRange[1]) * perc + newRange[1]
+    return newValue;
+  }
+
   var tails = [];
   function drawSampleTail(sampleArray,threshold = 0.01){
     tails.forEach(function (item) {
@@ -89,18 +96,21 @@ export default function map() {
       const volcanoBelongCenter = _volcanes[s.volcano]._latlngs[0][2]
       // if sample radius is [uncertainty] value
       const assVolcano = volcanNameList.filter(v => v.substring(0,3) === s.volcano.substring(0,3))
-      const tailLength = s.distoAllVolcan[assVolcano]  // TODO:: scale
-      const endTail = getPosWithin2Points(sampleCenter, volcanoBelongCenter, tailLength)
-      
-      let tail = L.polyline([sampleCenter, endTail], {color: '#000', weight: 1}) // longer line bigger distance to RL
-        .addTo(_mapContainer)
-        .on('click', function (e) {
-          // interaction...
-          // shiftViewport()
-          // ...
-        })   
-      tails.push(tail)
-      // use arrow : https://www.npmjs.com/package/leaflet-canvas-markers  ==> (can't change length) 
+      const sampleObsDis = s.distoAllVolcan[assVolcano]
+      if(sampleObsDis != null && sampleObsDis > 0 ){
+        const tailLength = mapTailLength(sampleObsDis, [0,5.529976584], [0.5,0]) // TODO:: scale
+        const endTail = getPosWithin2Points(sampleCenter, volcanoBelongCenter, tailLength)
+        
+        let tail = L.polyline([sampleCenter, endTail], {color: '#000', weight: 1}) // longer line bigger distance to RL
+          .addTo(_mapContainer)
+          .on('click', function (e) {
+            // interaction...
+            // shiftViewport()
+            // ...
+          })   
+        tails.push(tail)
+        // use arrow : https://www.npmjs.com/package/leaflet-canvas-markers  ==> (can't change length) 
+      }
     })
     // fake tail to other volcano
     sampleArray.forEach((s)=>{
@@ -116,17 +126,21 @@ export default function map() {
         const assVolcano = _volcanes[volcanoName]
         const volcanoBelongCenter = assVolcano._latlngs[0][2]
         // if sample radius is [uncertainty] value
-        const tailLength = disToAll[v] * 100 // TODO:: scale
-        const endTail = getPosWithin2Points(sampleCenter, volcanoBelongCenter, tailLength)
+        if(disToAll[v] != null && disToAll[v] > 0 ){
+          const tailLength = mapTailLength(disToAll[v], [0,threshold], [0.5,0]) // TODO:: scale
+          console.log(tailLength)
+          const endTail = getPosWithin2Points(sampleCenter, volcanoBelongCenter, tailLength)
+          
+          let tail = L.polyline([sampleCenter, endTail], {color: assVolcano.color, weight: 1}) // longer line bigger distance to RL
+            .addTo(_mapContainer)
+            .on('click', function (e) {
+              // interaction...
+              // shiftViewport()
+              // ...
+            })   
+          tails.push(tail)
+        }
         
-        let tail = L.polyline([sampleCenter, endTail], {color: assVolcano.color, weight: 1}) // longer line bigger distance to RL
-          .addTo(_mapContainer)
-          .on('click', function (e) {
-            // interaction...
-            // shiftViewport()
-            // ...
-          })   
-        tails.push(tail)
       })
       
       // use arrow : https://www.npmjs.com/package/leaflet-canvas-markers  ==> (can't change length) 
