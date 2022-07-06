@@ -7,17 +7,29 @@ export default function map() {
   var _volcanes
   var _samples
   var _tef
-
+  var _sampleCircles
+  var _selectedVolcanoes
   // SETUP THE IMAGE DIMENSIONS. THIS IS THE FIXED DIMENSIONS
   // OF THE IMAGES. I PRESERVE THE WIDTH/HEIGHT RATIO 
   var imgWidth = 400
   var imgHeight = 316
 
   let bins = 10;
+  let myrls = []; // my volcano regression line
+  let myMasks = []; // my volcano filter mask
+  function removeOldMasks() {
+    myMasks.forEach(function (m) {
+      _mapContainer.removeLayer(m)
+    })
+    myMasks = []
+  }
+
+  var slider = document.getElementById("myRange");
+  slider.disabled = true;
+  var output = document.getElementById("demo");
 
   // INITIALIZATION
   map.init = function (tef) {
-
     _tef = tef
     const mbAttr =
       'Map data &copy <a href="https://www.openstreetmap.org/">OpenStreetMap</a> contributors, ' +
@@ -46,36 +58,42 @@ export default function map() {
       removeOldIms()
       addNewIms()
       if (bins > 50) {
-        if (myMasks.length < 1) drawRLPathRect()
+        if (myMasks.length < 1) {
+          drawRL()
+          drawMask()
+          slider.disabled = false
+        }
       }
-      else removeOldMasks()
+      else{
+        removeOldMasks()
+        slider.disabled = true
+      } 
     })
+    slider.oninput = function () {
+      output.innerHTML = this.value
+      removeOldMasks()
+      drawMask(10* this.value)
+      _selectedVolcanoes.forEach( (volcan) =>{
+        removeSamples(volcan)
+        addSampleCircles(volcan, 0.05 * this.value)
+      })
+    }
 
     _volcanes = {}
     _samples = {}
+    _sampleCircles = {}
+    _selectedVolcanoes = []
     return map
   }
 
-  let myrls = []; // my volcano regression line
-  let myMasks = []; // my volcano filter mask
-  function removeOldMasks() {
-    myrls.forEach(function (m) {
-      _mapContainer.removeLayer(m)
-    })
-    myMasks.forEach(function (m) {
-      _mapContainer.removeLayer(m)
-    })
-    myrls = []
-    myMasks = []
-  }
-
-  function drawRLPathRect() {
+  function drawRL() {
     // only draw on selected volcanoes 
     // loop
     // volcan is one in the loop 
     myrls.forEach(function (m) {
       _mapContainer.removeLayer(m)
     })
+    myrls = []
     for (const [volcanName, volcan] of Object.entries(_volcanes)) {
       //let volcanIm_latlng = volcan.image._bounds._southWest
       // get all value in pixel
@@ -83,8 +101,6 @@ export default function map() {
 
       // GET THE STARTING POINT FOR EACH IMAGE
       let startRaw = _mapContainer.latLngToContainerPoint(volcan._latlng)
-
-      
 
       let length = 650
       if(!volcan.k) continue
@@ -97,14 +113,24 @@ export default function map() {
       let startLatLng = _mapContainer.containerPointToLatLng(start)
 
       let angle = Math.atan(k)
-      //start.y -= b
       let end = { x: start.x + length * Math.cos(angle), y: start.y - length * Math.sin(angle) }
       // from pixel to latlng
       let lineStart = _mapContainer.containerPointToLatLng(start)
       let lineEnd = _mapContainer.containerPointToLatLng(end)
+      let myrl = L.polyline([lineStart, lineEnd], { color: volcan.color, opacity: 0.7, angle: angle }).addTo(_mapContainer)
+      myrls.push(myrl)
+      _volcanes[volcanName].myRL = myrl      
+    }
+  }
+
+  function drawMask(halfWidth = 10){
+    removeOldMasks()
+    myrls.forEach(myRL => {
+      let start = _mapContainer.latLngToContainerPoint(myRL._bounds._southWest)
+      let end = _mapContainer.latLngToContainerPoint(myRL._bounds._northEast)
+      let angle = myRL.options.angle
 
       // polygon 4 corner
-      let halfWidth = 10
       let leftTop = { x: start.x - halfWidth * Math.sin(angle), y: start.y - halfWidth * Math.cos(angle) }
       let rightTop = { x: end.x - halfWidth * Math.sin(angle), y: end.y - halfWidth * Math.cos(angle) }
       let leftBottom = { x: start.x + halfWidth * Math.sin(angle), y: start.y + halfWidth * Math.cos(angle) }
@@ -122,49 +148,10 @@ export default function map() {
         GeorightTop
       ];
 
-      let myrl = L.polyline([lineStart, lineEnd], { color: volcan.color, opacity: 0.7 }).addTo(_mapContainer)
-      myrls.push(myrl)
-      _volcanes[volcanName].myRL = myrl
-      /*let myMask = L.polygon(bounds, { color: 'gray', weight: 1 }).addTo(_mapContainer)
+      let myMask = L.polygon(bounds, { color: 'gray', weight: 1 }).addTo(_mapContainer)
       myMasks.push(myMask)
-      _volcanes[volcanName].myMask = myMask*/
-    }
-    filterSize()
-  }
-
-  function filterSize() {
-    var slider = document.getElementById("myRange");
-    var output = document.getElementById("demo");
-    slider.oninput = function () {
-      output.innerHTML = this.value
-      removeOldMasks()
-      for (const [volcanName, volcan] of Object.entries(_volcanes)) {
-        let start = _mapContainer.latLngToContainerPoint(volcan.myRL._bounds._southWest)
-        let end = _mapContainer.latLngToContainerPoint(volcan.myRL._bounds._northEast)
-        let k = (volcan.effusive_regression_b == -1 || !volcan.effusive_regression_b) ? 0 : volcan.effusive_regression_b
-        let angle = Math.atan(k)
-
-        let halfWidth = 10 * this.value
-        let leftTop = { x: start.x - halfWidth * Math.sin(angle), y: start.y - halfWidth * Math.cos(angle) }
-        let rightTop = { x: end.x - halfWidth * Math.sin(angle), y: end.y - halfWidth * Math.cos(angle) }
-        let leftBottom = { x: start.x + halfWidth * Math.sin(angle), y: start.y + halfWidth * Math.cos(angle) }
-        let rightBottom = { x: end.x + halfWidth * Math.sin(angle), y: end.y + halfWidth * Math.cos(angle) }
-        // from pixel to latlng
-        let GeoleftTop = _mapContainer.containerPointToLatLng(leftTop)
-        let GeorightTop = _mapContainer.containerPointToLatLng(rightTop)
-        let GeoleftBottom = _mapContainer.containerPointToLatLng(leftBottom)
-        let GeorightBottom = _mapContainer.containerPointToLatLng(rightBottom)
-        let bounds = [
-          GeoleftTop,
-          GeoleftBottom,
-          GeorightBottom,
-          GeorightTop
-        ];
-        let myMask = L.polygon(bounds, { color: 'gray', weight: 1 }).addTo(_mapContainer)
-        myMasks.push(myMask)
-        _volcanes[volcanName].myMask = myMask
-      }
-    }
+      // _volcanes[volcanName].myMask = myMask
+    })
   }
 
   let volcanIms = []
@@ -278,6 +265,7 @@ export default function map() {
       _volcanes[volcan.Name].b = volcan.b
       _volcanes[volcan.Name].number_of_samples = volcan.number_of_samples
       _samples[volcan.Name] = []
+      _sampleCircles[volcan.Name] = []
     })
     addNewIms()
     return map
@@ -286,6 +274,7 @@ export default function map() {
   // UPDATES AFTER USER SELECTION
   map.updateSelectedVolcano = function (volcan, isSelected, samples) {
     const volcanIcon = _volcanes[volcan]
+
     if (!isSelected) {
       volcanIcon.setStyle({
         color: volcanIcon.color,
@@ -294,6 +283,7 @@ export default function map() {
         stroke: false
       })
       removeSamples(volcan)
+      _selectedVolcanoes = _selectedVolcanoes.filter(e => e !== volcan)
     } else {
       volcanIcon.setStyle({
         color: volcanIcon.color,
@@ -302,11 +292,12 @@ export default function map() {
         stroke: true
       })
       addSamples(volcan, samples)
+      _selectedVolcanoes.push(volcan)
     }
     return volcanIcon.selected
   }
   map.updateSelectedEvents = function (volcan, eventos) {
-    const markers = _samples[volcan]
+    const markers = _sampleCircles[volcan]
     const type = d3.selectAll('.scatter-view:checked').node().value
     markers.forEach((m) => {
       const selected = (eventos.indexOf(m.event) >= 0 && m.event != 'Unknown')
@@ -326,34 +317,44 @@ export default function map() {
       map.updateSelectedEvents(volcan, _selectedVolcanoes[volcan].events)
     }
   }
-  function addSamples(volcan, samples) {
+  function addSampleCircles(volcan, threshold = 0.05){
     const volcanIcon = _volcanes[volcan]
-    samples.forEach(function (m) {
+    _samples[volcan].forEach(function (m) {
       var lat = m.Latitude
       var lon = m.Longitude
-      console.log(m)
-      var newCircle = L.circle([lat, lon], { radius: m.sample_RMSE_to_regression ? m.sample_RMSE_to_regression * 2000 : 200, color: volcanIcon.color, fillColor: volcanIcon.color, weight: 1, fill: true })
-      // var newCircle = L.circle([lat, lon], { radius: 200, color: volcanIcon.color, fillColor: volcanIcon.color, weight: m.SampleObservation_distance_to_regression?m.SampleObservation_distance_to_regression * 10:1, fill: true })
-      var tipText = sampleTipText(m)
-      newCircle
-        .addTo(_mapContainer)
-        .bindPopup(tipText)
-        .on('mouseover', function (e) {
-          this.openPopup()
-        })
-        .on('mouseout', function (e) {
-          this.closePopup()
-        })
-      newCircle.event = m.Event
-      newCircle.volcano = m.Volcano
-      newCircle.isVisible = true
-      _samples[m.Volcano].push(newCircle)
+      if(m.sample_RMSE_to_regression && m.sample_RMSE_to_regression > threshold){
+        var newCircle = L.circle([lat, lon], { radius: m.sample_RMSE_to_regression ? m.sample_RMSE_to_regression * 2000 : 200, color: volcanIcon.color, fillColor: volcanIcon.color, weight: 1, fill: true })
+        var tipText = sampleTipText(m)
+        newCircle
+          .addTo(_mapContainer)
+          .bindPopup(tipText)
+          .on('mouseover', function (e) {
+            this.openPopup()
+          })
+          .on('mouseout', function (e) {
+            this.closePopup()
+          })
+        newCircle.event = m.Event
+        newCircle.volcano = m.Volcano
+        newCircle.isVisible = true
+        _sampleCircles[m.Volcano].push(newCircle)
+      }
     })
+    console.log(_sampleCircles[volcan].length)
+  }
+  function addSamples(volcan, samples) {
+    samples.forEach(function (m) {
+      var tipText = sampleTipText(m)
+      m.tipText = tipText
+      _samples[m.Volcano].push(m)
+    })
+    addSampleCircles(volcan)
   }
   function removeSamples(volcan) {
-    _samples[volcan].forEach(function (m) {
+    _sampleCircles[volcan].forEach(function (m) {
       _mapContainer.removeLayer(m)
     })
+    _sampleCircles[volcan] = []
   }
   return map
 }
