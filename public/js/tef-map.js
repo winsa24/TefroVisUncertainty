@@ -69,6 +69,7 @@ export default function map() {
         slider.disabled = true
       } 
     })
+    // Here goes all the slider changing things
     slider.oninput = function () {
       output.innerHTML = this.value
       removeOldMasks()
@@ -76,7 +77,9 @@ export default function map() {
       _selectedVolcanoes.forEach( (volcan) =>{
         removeSamples(volcan)
         addSampleCircles(volcan, 0.05 * this.value)
-      })
+        removeSampleTails()
+        drawSampleTail(_sampleCircles[volcan])
+      }) 
     }
 
     _volcanes = {}
@@ -84,6 +87,86 @@ export default function map() {
     _sampleCircles = {}
     _selectedVolcanoes = []
     return map
+  }
+
+  function getPosWithin2Points(start, end, length){
+    const angle = Math.atan2(end.lat - start.lat, end.lng - start.lng);
+    const xOffset = Math.cos(angle) * length;
+    const yOffset = Math.sin(angle) * length;
+    return {'lat': start.lat + yOffset, 'lng': start.lng + xOffset}
+  }
+
+  const volcanNameList = ['Llaima','Sollipulli','Caburga_Huelemolle','Villarrica','Quetrupillán','Lanín','Mocho_Choshuenco','Puyehue_Cordón_Caulle','Antillanca_Casablanca','Osorno','Calbuco','Yate','Apagado','Hornopirén','Huequi','Michinmahuida','Chaitén','Corcovado','Melimoyu','Mentolat','Cay','Macá','Hudson','Lautaro','Aguilera','Reclus','Monte_Burney']
+
+  function mapTailLength (value, oldRange, newRange) { // newRange : [2,1]
+    let perc = (value - oldRange[0]) / (oldRange[1] - oldRange[0])
+    let newValue = (newRange[0] - newRange[1]) * perc + newRange[1]
+    return newValue;
+  }
+
+  var tails = [];
+  function removeSampleTails(){
+    tails.forEach(function (item) {
+      _mapContainer.removeLayer(item)
+    });
+    tails = []
+  }
+  function drawSampleTail(sampleArray, threshold = 0.01){
+    // tail on assigned volcano
+    sampleArray.forEach((s)=>{
+      const sampleCenter = s._latlng
+      const volcanoBelongCenter = _volcanes[s.volcano]._latlng
+      // if sample radius is [uncertainty] value
+      const assVolcano = volcanNameList.filter(v => v.substring(0,3) === s.volcano.substring(0,3))
+      const sampleObsDis = s.distoAllVolcan[assVolcano]
+      if(sampleObsDis != null && sampleObsDis > 0 ){
+        const tailLength = mapTailLength(sampleObsDis, [0,5.529976584], [0.5,0]) // TODO:: scale
+        const endTail = getPosWithin2Points(sampleCenter, volcanoBelongCenter, tailLength)
+        
+        let tail = L.polyline([sampleCenter, endTail], {color: '#000', weight: 1}) // longer line bigger distance to RL
+          .addTo(_mapContainer)
+          .on('click', function (e) {
+            // interaction...
+            // shiftViewport()
+            // ...
+          })   
+        tails.push(tail)
+        // use arrow : https://www.npmjs.com/package/leaflet-canvas-markers  ==> (can't change length) 
+      }
+    })
+    // fake tail to other volcano
+    sampleArray.forEach((s)=>{
+      const sampleCenter = s._latlng
+      const disToAll = s.distoAllVolcan
+      const potentialVolcanoes = Object.keys(disToAll).filter(key => disToAll[key] < threshold)
+      potentialVolcanoes.forEach(v=>{
+        let volcanoName= v.replaceAll("_", "-")
+        switch(volcanoName){
+          case "Monte-Burney" : volcanoName = "Monte Burney"; break
+          case "Puyehue-Cordón-Caulle": volcanoName = "Puyehue-Cordón Caulle"; break;
+        }
+        const assVolcano = _volcanes[volcanoName]
+        const volcanoBelongCenter = assVolcano._latlng
+        // if sample radius is [uncertainty] value
+        if(disToAll[v] != null && disToAll[v] > 0 ){
+          const tailLength = mapTailLength(disToAll[v], [0,5.529976584], [0.5,0]) // TODO:: scale
+          console.log(tailLength)
+          const endTail = getPosWithin2Points(sampleCenter, volcanoBelongCenter, tailLength)
+          
+          let tail = L.polyline([sampleCenter, endTail], {color: assVolcano.color, weight: 1}) // longer line bigger distance to RL
+            .addTo(_mapContainer)
+            .on('click', function (e) {
+              // interaction...
+              // shiftViewport()
+              // ...
+            })   
+          tails.push(tail)
+        }
+        
+      })
+      
+      // use arrow : https://www.npmjs.com/package/leaflet-canvas-markers  ==> (can't change length) 
+    })
   }
 
   function drawRL() {
@@ -293,6 +376,7 @@ export default function map() {
       })
       addSamples(volcan, samples)
       _selectedVolcanoes.push(volcan)
+      drawSampleTail(_sampleCircles[volcan])
     }
     return volcanIcon.selected
   }
@@ -337,6 +421,35 @@ export default function map() {
         newCircle.event = m.Event
         newCircle.volcano = m.Volcano
         newCircle.isVisible = true
+        newCircle.distoAllVolcan = {
+          Llaima : m.Llaima,
+          Sollipulli :  m.Sollipulli,
+          Caburga_Huelemolle :  m.Caburga_Huelemolle,
+          Villarrica :  m.Villarrica,
+          Quetrupillán:  m.Quetrupillán,
+          Lanín :  m.Lanín,
+          Puyehue_Cordón_Caulle : m.Puyehue_Cordón_Caulle,
+          Antillanca_Casablanca :  m.Antillanca_Casablanca,
+          Osorno:  m.Osorno,
+          Calbuco:  m.Calbuco,
+          Yate : m.Yate,
+          Hornopirén:  m.Hornopirén,
+          Huequi: m.Huequi,
+          Michinmahuida:  m.Michinmahuida,
+          Chaitén:  m.Chaitén,
+          Corcovado: m.Corcovado,
+          Melimoyu:  m.Melimoyu,
+          Mentolat:  m.Mentolat,
+          Cay:  m.Cay,
+          Macá: m.Macá,
+          Hudson:  m.Hudson,
+          Lautaro:  m.Lautaro,
+          Aguilera: m.Aguilera,
+          Reclus:  m.Reclus,
+          Monte_Burney:  m.Monte_Burney,
+          Apagado:m.Apagado,
+          Mocho_Choshuenco: m.Mocho_Choshuenco
+        }
         _sampleCircles[m.Volcano].push(newCircle)
       }
     })
