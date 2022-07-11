@@ -98,9 +98,14 @@ export default function map() {
 
   const volcanNameList = ['Llaima','Sollipulli','Caburga_Huelemolle','Villarrica','Quetrupillán','Lanín','Mocho_Choshuenco','Puyehue_Cordón_Caulle','Antillanca_Casablanca','Osorno','Calbuco','Yate','Apagado','Hornopirén','Huequi','Michinmahuida','Chaitén','Corcovado','Melimoyu','Mentolat','Cay','Macá','Hudson','Lautaro','Aguilera','Reclus','Monte_Burney']
 
-  function mapTailLength (value, oldRange, newRange) { // newRange : [2,1]
+  function reversemapTailLength (value, oldRange, newRange) { // i.e. newRange : [2,1]
     let perc = (value - oldRange[0]) / (oldRange[1] - oldRange[0])
-    let newValue = (newRange[0] - newRange[1]) * perc + newRange[1]
+    let newValue = newRange[0] - (newRange[0] - newRange[1]) * perc 
+    return newValue;
+  }
+  function mapTailLength(value, oldRange, newRange){ // i.e. newRange : [1,2]
+    let perc = (value - oldRange[0]) / (oldRange[1] - oldRange[0])
+    let newValue = (newRange[1] - newRange[0]) * perc + newRange[0]
     return newValue;
   }
 
@@ -111,19 +116,30 @@ export default function map() {
     });
     tails = []
   }
-  function drawSampleTail(sampleArray, threshold = 0.01){
-    // tail on assigned volcano
+  
+  function drawSampleTail(sampleArray, threshold = 0.1){
     sampleArray.forEach((s)=>{
+      const disToAll = s.distoAllVolcan
+      let allDis = []
+      volcanNameList.forEach(v=>{
+        if(v!= 'Reclus' & v!= 'Monte_Burney'){
+          allDis.push(disToAll[v])
+        }
+      })
+      const minDis = Math.min(...allDis)
+      const maxDis = Math.max(...allDis)
+
       const sampleCenter = s._latlng
       const volcanoBelongCenter = _volcanes[s.volcano]._latlng
       // if sample radius is [uncertainty] value
       const assVolcano = volcanNameList.filter(v => v.substring(0,3) === s.volcano.substring(0,3))
-      const sampleObsDis = s.distoAllVolcan[assVolcano]
+      const sampleObsDis = disToAll[assVolcano]
+      // tail on assigned volcano
       if(sampleObsDis != null && sampleObsDis > 0 ){
-        const tailLength = mapTailLength(sampleObsDis, [0,5.529976584], [0.5,0]) // TODO:: scale
+        const tailLength = mapTailLength(sampleObsDis, [minDis,maxDis], [0,0.2]) // further = longer, closer = shorter
+
         const endTail = getPosWithin2Points(sampleCenter, volcanoBelongCenter, tailLength)
-        
-        let tail = L.polyline([sampleCenter, endTail], {color: '#000', weight: 1}) // longer line bigger distance to RL
+        let tail = L.polyline([sampleCenter, endTail], {color: '#000', weight: 5}) // longer line bigger distance to RL
           .addTo(_mapContainer)
           .on('click', function (e) {
             // interaction...
@@ -133,11 +149,7 @@ export default function map() {
         tails.push(tail)
         // use arrow : https://www.npmjs.com/package/leaflet-canvas-markers  ==> (can't change length) 
       }
-    })
-    // fake tail to other volcano
-    sampleArray.forEach((s)=>{
-      const sampleCenter = s._latlng
-      const disToAll = s.distoAllVolcan
+      // tails to other volcano
       const potentialVolcanoes = Object.keys(disToAll).filter(key => disToAll[key] < threshold)
       potentialVolcanoes.forEach(v=>{
         let volcanoName= v.replaceAll("_", "-")
@@ -149,11 +161,10 @@ export default function map() {
         const volcanoBelongCenter = assVolcano._latlng
         // if sample radius is [uncertainty] value
         if(disToAll[v] != null && disToAll[v] > 0 ){
-          const tailLength = mapTailLength(disToAll[v], [0,5.529976584], [0.5,0]) // TODO:: scale
-          console.log(tailLength)
+          const tailLength = reversemapTailLength(disToAll[v], [minDis, maxDis], [0.2,0]) // further = shorter, closer = longer
           const endTail = getPosWithin2Points(sampleCenter, volcanoBelongCenter, tailLength)
           
-          let tail = L.polyline([sampleCenter, endTail], {color: assVolcano.color, weight: 1}) // longer line bigger distance to RL
+          let tail = L.polyline([sampleCenter, endTail], {color: assVolcano.color, weight: 5}) // longer line bigger distance to RL
             .addTo(_mapContainer)
             .on('click', function (e) {
               // interaction...
@@ -162,10 +173,7 @@ export default function map() {
             })   
           tails.push(tail)
         }
-        
       })
-      
-      // use arrow : https://www.npmjs.com/package/leaflet-canvas-markers  ==> (can't change length) 
     })
   }
 
