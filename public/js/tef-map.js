@@ -198,6 +198,7 @@ export default function map() {
   }
 
   function getPosWithin2Points(start, end, length){
+    if(isNaN(length)) return start
     const angle = Math.atan2(end.lat - start.lat, end.lng - start.lng);
     const xOffset = Math.cos(angle) * length;
     const yOffset = Math.sin(angle) * length;
@@ -241,8 +242,19 @@ export default function map() {
         case "Monte-Burney" : refVolcanName = "Monte Burney"; break
         case "Puyehue-Cordón-Caulle": refVolcanName = "Puyehue-Cordón Caulle"; break;
       }
+      const tailLength = reversemapTailLength(disToAll[refVolcanName], [minDis, maxDis], [0.2,0]) // further = shorter, closer = longer
+      const endTail = getPosWithin2Points(sampleCenter, _volcanes[refVolcanName]._latlng, tailLength)
 
-      for(let i = 0; i < 3; i++){ // only show top three shortest dis
+      let tail = L.polyline([sampleCenter, endTail], {color: '#000', weight: 5}) // longer line bigger distance to RL
+          .addTo(_mapContainer)
+          .on('click', function (e) {
+            // interaction...
+            // shiftViewport()
+            // ...
+          })   
+      tails.push(tail)
+
+      for(let i = 0; i < Object.keys(disToAll).length; i++){ 
         const v = keysSorted[i]
         // draw tail
         let volcanoName= v.replaceAll("_", "-")
