@@ -16,12 +16,17 @@ export default function map() {
 
   let bins = 10;
   let myrls = []; // my volcano regression line
-  let myMasks = []; // my volcano filter mask
+  let myMasks = {}; // my volcano filter mask
+  var myMasksLayerGroup
   function removeOldMasks() {
+    myMasksLayerGroup.removeFrom(_mapContainer)
+    myMasksLayerGroup = L.layerGroup([])
+    myMasksLayerGroup.addTo(_mapContainer)
+    /*return 
     myMasks.forEach(function (m) {
       _mapContainer.removeLayer(m)
     })
-    myMasks = []
+    myMasks = []*/
   }
 
   var slider = document.getElementById("myRange");
@@ -47,6 +52,10 @@ export default function map() {
     _mapContainer = L.map('volcanoMap').setView([-45, -71.489618], 6)
     grayscale.addTo(_mapContainer)
     L.control.scale().addTo(_mapContainer)
+    // TEST: Mask layers in only one big layer
+    myMasksLayerGroup = L.layerGroup([])
+    myMasksLayerGroup.addTo(_mapContainer)
+
     _mapContainer.on('zoomend', function (e) {
       let zoomLevel = _mapContainer.getZoom()
       if (zoomLevel <= 3) bins = 2;
@@ -58,7 +67,7 @@ export default function map() {
       removeOldIms()
       addNewIms()
       if (bins > 50) {
-        if (myMasks.length < 1) {
+        if (Object.keys(myMasks).length < 1) {
           drawRL()
           drawMask()
           slider.disabled = false
@@ -185,20 +194,21 @@ export default function map() {
       // I MOVE THE STARTING POINT UP SO THE LEFT BOTTOM
       // CORNER ALIGNS WITH THE TIP OF THE VOLCANO TRIANGLE
       let start = { x: startRaw.x, y: startRaw.y - b}
-      let startLatLng = _mapContainer.containerPointToLatLng(start)
 
       let angle = Math.atan(k)
       let end = { x: start.x + length * Math.cos(angle), y: start.y - length * Math.sin(angle) }
       // from pixel to latlng
       let lineStart = _mapContainer.containerPointToLatLng(start)
       let lineEnd = _mapContainer.containerPointToLatLng(end)
-      let myrl = L.polyline([lineStart, lineEnd], { color: volcan.color, opacity: 0.7, angle: angle }).addTo(_mapContainer)
+      let myrl = L.polyline([lineStart, lineEnd], { color: volcan.color, opacity: 0.7, angle: angle, volcano: volcan }).addTo(_mapContainer)
+      myrl.start = L.latLng(lineStart.lat, lineStart.lng)
+      myrl.end = L.latLng(lineEnd.lat, lineEnd.lng)
       myrls.push(myrl)
       _volcanes[volcanName].myRL = myrl      
     }
   }
 
-  function drawMask(halfWidth = 10){
+  function drawMask(halfWidth = 100){
     removeOldMasks()
     myrls.forEach(myRL => {
       let start = _mapContainer.latLngToContainerPoint(myRL._bounds._southWest)
@@ -222,10 +232,8 @@ export default function map() {
         GeorightBottom,
         GeorightTop
       ];
-
-      let myMask = L.polygon(bounds, { color: 'gray', weight: 1 }).addTo(_mapContainer)
-      myMasks.push(myMask)
-      // _volcanes[volcanName].myMask = myMask
+      let myMask = L.polygon(bounds, { color: 'gray', weight: 1 }) 
+      myMasksLayerGroup.addLayer(myMask)
     })
   }
 
@@ -237,10 +245,6 @@ export default function map() {
   }
   function addNewIms() {
     for (const [volcanName, volcan] of Object.entries(_volcanes)) {
-      // [0.12, 0.2]=> put image org at the triangle top
-      //let lat = Number(volcan._latlng.lat) // + 0.12
-      //let lon =  Number(volcan._latlng.lng)// + 0.2
-      //var diff = 0 //0.05
 
       // GET THE STARTING POINT FOR EACH IMAGE
       let startRaw = _mapContainer.latLngToContainerPoint(volcan._latlng)
@@ -249,18 +253,10 @@ export default function map() {
       // CORNER ALIGNS WITH THE TIP OF THE VOLCANO TRIANGLE
       let start = { x: startRaw.x, y: startRaw.y - imgHeight }
       let startLatLng = _mapContainer.containerPointToLatLng(start)
-      //let end = {x: start.x + 122, y: start.y - 96.6}
-      //let end = {x: start.x, y: start.y}
-
-      // from pixel to latlng
-      //let lineStart = _mapContainer.containerPointToLatLng(start)
-      //let lineEnd = _mapContainer.containerPointToLatLng(end)
 
       // I CALCULATE THE IMAGE BOUNDS BASED ON THE IMAGE SIZE RATIO
       let imagePixelBounds = { x: start.x + imgWidth, y: start.y + imgHeight }
       let imageEnd = _mapContainer.containerPointToLatLng(imagePixelBounds)
-
-
 
       var imageUrl = `/img/heatmap_${bins}_viridis_r/${volcanName}.png`
       if (['Huanquihue Group', 'Carrán-Los Venados', 'Yanteles', 'Viedma'].indexOf(volcanName) >= 0) imageUrl = `/img/blank.png`
