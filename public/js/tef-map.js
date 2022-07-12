@@ -115,6 +115,7 @@ export default function map() {
   function drawSampleTail(sampleArray, threshold = 0.1){
     sampleArray.forEach((s)=>{
       const disToAll = s.distoAllVolcan
+      console.log(disToAll)
       delete disToAll['Reclus']
       delete disToAll['Monte_Burney']
       const keysSorted = Object.keys(disToAll).sort(function(a,b){return disToAll[a]-disToAll[b]})
