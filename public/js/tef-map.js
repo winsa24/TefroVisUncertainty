@@ -248,9 +248,7 @@ export default function map() {
       let tail = L.polyline([sampleCenter, endTail], {color: '#000', weight: 5}) // longer line bigger distance to RL
           .addTo(_mapContainer)
           .on('click', function (e) {
-            // interaction...
-            // shiftViewport()
-            // ...
+            _mapContainer.flyTo(_volcanes[refVolcanName]._latlng, 11)
           })   
       tails.push(tail)
 
