@@ -135,9 +135,7 @@ export default function map() {
       let tail = L.polyline([sampleCenter, endTail], {color: '#000', weight: 5}) // longer line bigger distance to RL
           .addTo(_mapContainer)
           .on('click', function (e) {
-            // interaction...
-            // shiftViewport()
-            // ...
+            _mapContainer.flyTo(_volcanes[refVolcanName]._latlng, 11)
           })   
       tails.push(tail)
 
@@ -156,15 +154,12 @@ export default function map() {
         const potentialVolcan = _volcanes[volcanoName]
         const volcanoBelongCenter = _volcanes[volcanoName]._latlng
         // const tailLength = (disToAll[refVolcanName] - disToAll[v]) * 0.1// further = shorter, closer = longer
-        const tailLength = reversemapTailLength(disToAll[v], [minDis, maxDis], [0.2,0]) // further = shorter, closer = longer
+        const tailLength = reversemapTailLength(disToAll[v], [minDis, maxDis], [0.2,0])// further = shorter, closer = longer
         const endTail = getPosWithin2Points(sampleCenter, volcanoBelongCenter, tailLength)
-        
         let tail = L.polyline([sampleCenter, endTail], {color: potentialVolcan.color, weight: 5}) // longer line bigger distance to RL
           .addTo(_mapContainer)
           .on('click', function (e) {
-            // interaction...
-            // shiftViewport()
-            // ...
+            _mapContainer.flyTo(potentialVolcan._latlng, 11)
           })   
         tails.push(tail)
       }
