@@ -103,12 +103,7 @@ export default function map() {
     let newValue = newRange[0] - (newRange[0] - newRange[1]) * perc 
     return newValue;
   }
-  function mapTailLength(value, oldRange, newRange){ // i.e. newRange : [1,2]
-    let perc = (value - oldRange[0]) / (oldRange[1] - oldRange[0])
-    let newValue = (newRange[1] - newRange[0]) * perc + newRange[0]
-    return newValue;
-  }
-
+  
   var tails = [];
   function removeSampleTails(){
     tails.forEach(function (item) {
@@ -116,30 +111,40 @@ export default function map() {
     });
     tails = []
   }
-  
+
   function drawSampleTail(sampleArray, threshold = 0.1){
     sampleArray.forEach((s)=>{
       const disToAll = s.distoAllVolcan
-      let allDis = []
-      volcanNameList.forEach(v=>{
-        if(v!= 'Reclus' & v!= 'Monte_Burney'){
-          allDis.push(disToAll[v])
-        }
-      })
-      const minDis = Math.min(...allDis)
-      const maxDis = Math.max(...allDis)
+      delete disToAll['Reclus']
+      delete disToAll['Monte_Burney']
+      const keysSorted = Object.keys(disToAll).sort(function(a,b){return disToAll[a]-disToAll[b]})
 
       const sampleCenter = s._latlng
-      const volcanoBelongCenter = _volcanes[s.volcano]._latlng
-      // if sample radius is [uncertainty] value
-      const assVolcano = volcanNameList.filter(v => v.substring(0,3) === s.volcano.substring(0,3))
-      const sampleObsDis = disToAll[assVolcano]
-      // tail on assigned volcano
-      if(sampleObsDis != null && sampleObsDis > 0 ){
-        const tailLength = mapTailLength(sampleObsDis, [minDis,maxDis], [0,0.2]) // further = longer, closer = shorter
+      let refVolcanName = volcanNameList.filter(v => v.substring(0,3) === s.volcano.substring(0,3))[0]
+      refVolcanName= refVolcanName.replaceAll("_", "-")
+      switch(refVolcanName){
+        case "Monte-Burney" : refVolcanName = "Monte Burney"; break
+        case "Puyehue-Cordón-Caulle": refVolcanName = "Puyehue-Cordón Caulle"; break;
+      }
 
+      for(let i = 0; i < 3; i++){ // only show top three shortest dis
+        const v = keysSorted[i]
+        // draw tail
+        let volcanoName= v.replaceAll("_", "-")
+        switch(volcanoName){
+          case "Monte-Burney" : volcanoName = "Monte Burney"; break
+          case "Puyehue-Cordón-Caulle": volcanoName = "Puyehue-Cordón Caulle"; break;
+        }
+
+        // only draw dis < refV's dis
+        if(v == refVolcanName) break;
+
+        const potentialVolcan = _volcanes[volcanoName]
+        const volcanoBelongCenter = _volcanes[volcanoName]._latlng
+        const tailLength = (disToAll[refVolcanName] - disToAll[v]) * 0.1// further = shorter, closer = longer
         const endTail = getPosWithin2Points(sampleCenter, volcanoBelongCenter, tailLength)
-        let tail = L.polyline([sampleCenter, endTail], {color: '#000', weight: 5}) // longer line bigger distance to RL
+        
+        let tail = L.polyline([sampleCenter, endTail], {color: potentialVolcan.color, weight: 5}) // longer line bigger distance to RL
           .addTo(_mapContainer)
           .on('click', function (e) {
             // interaction...
@@ -147,33 +152,7 @@ export default function map() {
             // ...
           })   
         tails.push(tail)
-        // use arrow : https://www.npmjs.com/package/leaflet-canvas-markers  ==> (can't change length) 
       }
-      // tails to other volcano
-      const potentialVolcanoes = Object.keys(disToAll).filter(key => disToAll[key] < threshold)
-      potentialVolcanoes.forEach(v=>{
-        let volcanoName= v.replaceAll("_", "-")
-        switch(volcanoName){
-          case "Monte-Burney" : volcanoName = "Monte Burney"; break
-          case "Puyehue-Cordón-Caulle": volcanoName = "Puyehue-Cordón Caulle"; break;
-        }
-        const assVolcano = _volcanes[volcanoName]
-        const volcanoBelongCenter = assVolcano._latlng
-        // if sample radius is [uncertainty] value
-        if(disToAll[v] != null && disToAll[v] > 0 ){
-          const tailLength = reversemapTailLength(disToAll[v], [minDis, maxDis], [0.2,0]) // further = shorter, closer = longer
-          const endTail = getPosWithin2Points(sampleCenter, volcanoBelongCenter, tailLength)
-          
-          let tail = L.polyline([sampleCenter, endTail], {color: assVolcano.color, weight: 5}) // longer line bigger distance to RL
-            .addTo(_mapContainer)
-            .on('click', function (e) {
-              // interaction...
-              // shiftViewport()
-              // ...
-            })   
-          tails.push(tail)
-        }
-      })
     })
   }
 
@@ -409,7 +388,7 @@ export default function map() {
       map.updateSelectedEvents(volcan, _selectedVolcanoes[volcan].events)
     }
   }
-  function addSampleCircles(volcan, threshold = 0.05){
+  function addSampleCircles(volcan, threshold = 0.5){
     const volcanIcon = _volcanes[volcan]
     _samples[volcan].forEach(function (m) {
       var lat = m.Latitude
