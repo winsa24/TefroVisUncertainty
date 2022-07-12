@@ -11,6 +11,7 @@ export default function map() {
   var _selectedVolcanoes
   // SETUP THE IMAGE DIMENSIONS. THIS IS THE FIXED DIMENSIONS
   // OF THE IMAGES. I PRESERVE THE WIDTH/HEIGHT RATIO 
+  let volcanIms = []
   var imgWidth = 400
   var imgHeight = 316
 
@@ -28,10 +29,46 @@ export default function map() {
     })
     myMasks = []*/
   }
+  function removeRLs(){
+    myrls.forEach(function (m) {
+      _mapContainer.removeLayer(m)
+    })
+    myrls = []
+  }
 
-  var slider = document.getElementById("myRange");
+  var slider = document.getElementById("my-range");
   slider.disabled = true;
+  // Here goes all the slider changing things
+  slider.oninput = function () {
+    output.innerHTML = this.value
+    removeOldMasks()
+    drawMask(10* this.value)
+    _selectedVolcanoes.forEach( (volcan) =>{
+      removeSamples(volcan)
+      addSampleCircles(volcan, 0.05 * this.value)
+      removeSampleTails()
+      drawSampleTail(_sampleCircles[volcan])
+    })
+  }
   var output = document.getElementById("demo");
+  $('#volcan-color').click(function(){
+    if($(this).is(':checked')){
+      Object.keys(_volcanes).forEach(volcan => {
+        _volcanes[volcan].setStyle({color: _volcanes[volcan].color})
+      })
+    } else {
+      Object.keys(_volcanes).forEach(volcan => {
+        _volcanes[volcan].setStyle({color:  _volcanes[volcan].colorMap}) 
+      })
+    }
+  });
+  $('#volcan-RL').click(function(){
+    if($(this).is(':checked')){
+      removeOldIms()
+    } else {
+      addNewIms()
+    }
+  });
 
   // INITIALIZATION
   map.init = function (tef) {
@@ -75,21 +112,10 @@ export default function map() {
       }
       else{
         removeOldMasks()
+        removeRLs()
         slider.disabled = true
       } 
     })
-    // Here goes all the slider changing things
-    slider.oninput = function () {
-      output.innerHTML = this.value
-      removeOldMasks()
-      drawMask(10* this.value)
-      _selectedVolcanoes.forEach( (volcan) =>{
-        removeSamples(volcan)
-        addSampleCircles(volcan, 0.05 * this.value)
-        removeSampleTails()
-        drawSampleTail(_sampleCircles[volcan])
-      }) 
-    }
 
     _volcanes = {}
     _samples = {}
@@ -179,10 +205,7 @@ export default function map() {
     // only draw on selected volcanoes 
     // loop
     // volcan is one in the loop 
-    myrls.forEach(function (m) {
-      _mapContainer.removeLayer(m)
-    })
-    myrls = []
+    removeRLs()
     for (const [volcanName, volcan] of Object.entries(_volcanes)) {
       //let volcanIm_latlng = volcan.image._bounds._southWest
       // get all value in pixel
@@ -242,7 +265,6 @@ export default function map() {
     })
   }
 
-  let volcanIms = []
   function removeOldIms() {
     volcanIms.forEach(function (m) {
       _mapContainer.removeLayer(m)
@@ -266,7 +288,7 @@ export default function map() {
       var imageUrl = `/img/heatmap_${bins}_viridis_r/${volcanName}.png`
       if (['Huanquihue Group', 'Carrán-Los Venados', 'Yanteles', 'Viedma'].indexOf(volcanName) >= 0) imageUrl = `/img/blank.png`
       if (['Puntiagudo', 'Tronador', 'Arenales', 'Aguilera', 'Reclus', 'Fueguino', 'Monte Burney'].indexOf(volcanName) >= 0) imageUrl = `/img/blank.png`
-      let imageBounds;
+      let imageBounds, opacity
       if (bins < 50) {
         // imagePixelBounds = { x: start.x + imgWidth * 0.5, y: start.y + imgHeight *0.5}
         start.y += imgHeight * 0.5
@@ -274,11 +296,13 @@ export default function map() {
         startLatLng = _mapContainer.containerPointToLatLng(start)
         imageEnd = _mapContainer.containerPointToLatLng(imagePixelBounds)
         imageBounds = [startLatLng, imageEnd]
+        opacity = 0.01 * bins
       }
       else {
         imageBounds = [startLatLng, imageEnd]
+        opacity = 1
       }
-      let volcanIm = L.imageOverlay(imageUrl, imageBounds, { alt: `no plot for ${volcanName}` }).addTo(_mapContainer)
+      let volcanIm = L.imageOverlay(imageUrl, imageBounds, { alt: `no plot for ${volcanName}` , opacity: opacity  }).addTo(_mapContainer)
       volcanIms.push(volcanIm)
       _volcanes[volcanName].image = volcanIm
     }
@@ -322,6 +346,7 @@ export default function map() {
 
       volcanIcon.id = volcan.Name
       volcanIcon.color = volcan.Color
+      volcanIcon.colorMap = cmReds(sampleNumbers)
       volcanIcon.isSelected = false
       volcanIcon
         .addTo(_mapContainer)
