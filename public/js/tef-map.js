@@ -103,6 +103,11 @@ export default function map() {
     let newValue = newRange[0] - (newRange[0] - newRange[1]) * perc 
     return newValue;
   }
+  function mapTailLength(value, oldRange, newRange){ // i.e. newRange : [1,2]
+    let perc = (value - oldRange[0]) / (oldRange[1] - oldRange[0])
+    let newValue = (newRange[1] - newRange[0]) * perc + newRange[0]
+    return newValue;
+  }
   
   var tails = [];
   function removeSampleTails(){
@@ -118,6 +123,9 @@ export default function map() {
       console.log(disToAll)
       delete disToAll['Reclus']
       delete disToAll['Monte_Burney']
+      const minDis = Math.min(...Object.values(disToAll))
+      const maxDis = Math.max(...Object.values(disToAll))
+      console.log(minDis, maxDis)
       const keysSorted = Object.keys(disToAll).sort(function(a,b){return disToAll[a]-disToAll[b]})
 
       const sampleCenter = s._latlng
@@ -142,7 +150,11 @@ export default function map() {
 
         const potentialVolcan = _volcanes[volcanoName]
         const volcanoBelongCenter = _volcanes[volcanoName]._latlng
-        const tailLength = (disToAll[refVolcanName] - disToAll[v]) * 0.1// further = shorter, closer = longer
+        // const tailLength = (disToAll[refVolcanName] - disToAll[v]) * 0.1// further = shorter, closer = longer
+        const tailLength = reversemapTailLength(disToAll[v], [minDis, maxDis], [0.2,0]) // further = shorter, closer = longer
+        console.log(disToAll[v])
+        console.log(tailLength)
+        console.log(">>>>>>>")
         const endTail = getPosWithin2Points(sampleCenter, volcanoBelongCenter, tailLength)
         
         let tail = L.polyline([sampleCenter, endTail], {color: potentialVolcan.color, weight: 5}) // longer line bigger distance to RL
