@@ -120,12 +120,10 @@ export default function map() {
   function drawSampleTail(sampleArray, threshold = 0.1){
     sampleArray.forEach((s)=>{
       const disToAll = s.distoAllVolcan
-      console.log(disToAll)
       delete disToAll['Reclus']
       delete disToAll['Monte_Burney']
       const minDis = Math.min(...Object.values(disToAll))
       const maxDis = Math.max(...Object.values(disToAll))
-      console.log(minDis, maxDis)
       const keysSorted = Object.keys(disToAll).sort(function(a,b){return disToAll[a]-disToAll[b]})
 
       const sampleCenter = s._latlng
@@ -151,18 +149,12 @@ export default function map() {
         const potentialVolcan = _volcanes[volcanoName]
         const volcanoBelongCenter = _volcanes[volcanoName]._latlng
         // const tailLength = (disToAll[refVolcanName] - disToAll[v]) * 0.1// further = shorter, closer = longer
-        const tailLength = reversemapTailLength(disToAll[v], [minDis, maxDis], [0.2,0]) // further = shorter, closer = longer
-        console.log(disToAll[v])
-        console.log(tailLength)
-        console.log(">>>>>>>")
+        const tailLength = reversemapTailLength(disToAll[v], [minDis, maxDis], [0.2,0])// further = shorter, closer = longer
         const endTail = getPosWithin2Points(sampleCenter, volcanoBelongCenter, tailLength)
-        
         let tail = L.polyline([sampleCenter, endTail], {color: potentialVolcan.color, weight: 5}) // longer line bigger distance to RL
           .addTo(_mapContainer)
           .on('click', function (e) {
-            // interaction...
-            // shiftViewport()
-            // ...
+            _mapContainer.flyTo(potentialVolcan._latlng, 11)
           })   
         tails.push(tail)
       }
