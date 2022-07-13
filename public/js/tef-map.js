@@ -70,6 +70,8 @@ export default function map() {
     }
   });
 
+  let textMarker;
+
   // INITIALIZATION
   map.init = function (tef) {
     _tef = tef
@@ -467,6 +469,17 @@ export default function map() {
       }
     })
     console.log(_sampleCircles[volcan].length)
+
+
+    if(textMarker) _mapContainer.removeLayer(textMarker)
+    var icontext = _sampleCircles[volcan].length + '/' + _samples[volcan].length
+    var pos = _volcanes[volcan]._latlng
+    var icon = L.divIcon({
+      iconSize:null,
+      html:'<div class="map-label-content">'+icontext+'</div>'
+    });
+    textMarker = L.marker(pos,{icon: icon}).addTo(_mapContainer);
+
   }
   function addSamples(volcan, samples) {
     samples.forEach(function (m) {
