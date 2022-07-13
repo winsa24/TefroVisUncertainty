@@ -70,6 +70,8 @@ export default function map() {
     }
   });
 
+  let textMarker;
+
   // INITIALIZATION
   map.init = function (tef) {
     _tef = tef
@@ -421,6 +423,7 @@ export default function map() {
   }
   function addSampleCircles(volcan, threshold = 0.5){
     const volcanIcon = _volcanes[volcan]
+    threshold = output.innerHTML * 0.05
     _samples[volcan].forEach(function (m) {
       var lat = m.Latitude
       var lon = m.Longitude
@@ -472,6 +475,17 @@ export default function map() {
       }
     })
     console.log(_sampleCircles[volcan].length)
+
+
+    if(textMarker) _mapContainer.removeLayer(textMarker)
+    var icontext = _sampleCircles[volcan].length + '/' + _samples[volcan].length
+    var pos = _volcanes[volcan]._latlng
+    var icon = L.divIcon({
+      iconSize:null,
+      html:'<div class="map-label-content">'+icontext+'</div>'
+    });
+    textMarker = L.marker(pos,{icon: icon}).addTo(_mapContainer);
+
   }
   function addSamples(volcan, samples) {
     samples.forEach(function (m) {
