@@ -92,7 +92,9 @@ export default function map() {
     .domain([Math.min(...SN), Math.max(...SN)])// TODO:: normlize volcan sample number
     .range(viridis_r)
     // append a defs (for definition) element to your SVG
-    var svgLegend = d3.select('#legend').append('svg');
+    var svgLegend = d3.select('#legend').append('svg')
+    .attr("width", 350)
+    .attr("height", 30);
     var defs = svgLegend.append('defs');
     // append a linearGradient element to the defs and give it a unique id
     var linearGradient = defs.append('linearGradient')
@@ -112,20 +114,20 @@ export default function map() {
       .attr("offset", function(d,i) { return i/(cmReds.range().length-1); })
       .attr("stop-color", function(d) { return d; });
 
-    // append title
-    svgLegend.append("text")
-      .attr("class", "legendTitle")
-      .attr("x", 0)
-      .attr("y", 20)
-      .style("text-anchor", "left")
-      .text("Sample Number");
+    // // append title
+    // svgLegend.append("text")
+    //   .attr("class", "legendTitle")
+    //   .attr("x", 0)
+    //   .attr("y", 20)
+    //   .style("text-anchor", "left")
+    //   .text("Sample Number");
 
     // draw the rectangle and fill with gradient
     svgLegend.append("rect")
-      .attr("x", 0)
-      .attr("y", 30)
+      .attr("x", 10)
+      .attr("y", 0)
       .attr("width", 300)
-      .attr("height", 15)
+      .attr("height", 8)
       .style("fill", "url(#linear-gradient)");
 
     //create tick marks
@@ -133,12 +135,12 @@ export default function map() {
       .domain([Math.min(...SN), Math.max(...SN)])
       .range([0, 300]);
 
-    var axisLeg = d3.axisBottom(xLeg).ticks(2);
+    var axisLeg = d3.axisBottom(xLeg).ticks(5);
 
     svgLegend
     .attr("class", "axis")
     .append("g")
-    .attr("transform", "translate(0, 40)")
+    .attr("transform", "translate(10, 10)")
     .call(axisLeg);
   }
  
