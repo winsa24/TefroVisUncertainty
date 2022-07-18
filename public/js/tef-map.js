@@ -37,10 +37,11 @@ export default function map() {
   }
 
   var slider = document.getElementById("my-range");
+  var output = document.getElementById("demo");
   slider.disabled = true;
   // Here goes all the slider changing things
   slider.oninput = function () {
-    output.innerHTML = this.value
+    output.innerHTML = this.value * 10
     removeOldMasks()
     drawMask(10* this.value)
     _selectedVolcanoes.forEach( (volcan) =>{
@@ -50,7 +51,7 @@ export default function map() {
       drawSampleTail(_sampleCircles[volcan])
     })
   }
-  var output = document.getElementById("demo");
+  
   $('#volcan-color').click(function(){
     if($(this).is(':checked')){
       Object.keys(_volcanes).forEach(volcan => {
