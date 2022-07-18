@@ -48,7 +48,7 @@ export default function map() {
       removeSamples(volcan)
       addSampleCircles(volcan, 0.05 * this.value)
       removeSampleTails()
-      drawSampleTail(_sampleCircles[volcan])
+      if(tailStatus) drawSampleTail(_sampleCircles[volcan])
     })
   }
   
@@ -68,6 +68,21 @@ export default function map() {
       removeOldIms()
     } else {
       addNewIms()
+    }
+  });
+  let tailStatus = true
+  $('#sample-tail').click(function(){
+    if($(this).is(':checked')){
+      removeSampleTails()
+      tailStatus = false
+    } else {
+      tailStatus = true
+      _selectedVolcanoes.forEach( (volcan) =>{
+        removeSamples(volcan)
+        addSampleCircles(volcan, 0.05 * this.value)
+        removeSampleTails()
+        drawSampleTail(_sampleCircles[volcan])
+      })
     }
   });
 
@@ -475,7 +490,7 @@ export default function map() {
   }
   function addSampleCircles(volcan, threshold = 0.5){
     const volcanIcon = _volcanes[volcan]
-    threshold = output.innerHTML * 0.05
+    threshold = output.innerHTML * 0.005
     _samples[volcan].forEach(function (m) {
       var lat = m.Latitude
       var lon = m.Longitude
