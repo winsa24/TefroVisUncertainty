@@ -23,6 +23,7 @@ export default function tef() {
       d3.json('/api/all-volcanoes'),
       d3.json('/api/all-events'),
       d3.csv('/data/TephraDataBase_renormalizado_sample_distance_to_all_sample_RMSE_to_regression.csv'),
+      d3.csv('/data/TephraDataBase_renormalizado_scatterplot.csv'),
     ])
       .then(function (data_raw) {
         const volcanoes = data_raw[0].data
@@ -30,7 +31,7 @@ export default function tef() {
         _selectedVolcanoes = {}
         _samples = data_raw[2]
 
-        _ndx = crossfilter(_samples)
+        _ndx = crossfilter(data_raw[3])
         /*_volcanoesEvents = _ndx.dimension(function (d) {
           return [d['Volcano'], d['Event'], d['Flag']]
         }).filter(

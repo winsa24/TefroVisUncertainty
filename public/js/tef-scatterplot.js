@@ -204,7 +204,6 @@ export default function scatterplot() {
         .attr('type', 'button')
         .attr('class', 'btn btn-secondary dropdown-toggle')
         .attr('data-bs-toggle', 'dropdown')
-        //.attr('aria-haspopup', 'true')
         .attr('aria-expanded', false)
         .attr('id', thisDim + 'Dim_' + n + '_label')
         .html(thisDim)
@@ -259,32 +258,36 @@ export default function scatterplot() {
 
   scatterplot.highlightSample = function (sample) {
     loading()
-    dc.redrawAll()
+    setTimeout(function () {
+      dc.redrawAll()
+      for (let index in _charts) {
+        let thisChart = _charts[index]
+        let canvas = d3.select('#scatterChart_' + index).select('canvas').node();
+        let context = canvas.getContext('2d');
+        let xDim = _xDims[index]
+        let centerX = thisChart.x()(sample[xDim])
+        let yDim = _yDims[index]
+        let centerY = thisChart.y()(sample[yDim])
+        var radius = 3;
+        context.beginPath();
+        context.arc(centerX, centerY, radius, 0, 2 * Math.PI, true);
+        context.fillStyle = 'rgba(0, 0, 0, 1)';
+        context.fill();
+        /*context.lineWidth = 3;
+        context.strokeStyle = '#000';
+        context.stroke();*/
+        // This is just to test the highlighted samples
+        /*_allDimensions.filter(null)
+        _allDimensions.filterFunction(d => {
+          if(d["ID"] == sample.OriginalID) console.log(d)
+          return d["ID"] == sample.OriginalID 
+        })*/
+      }
+      ready()
+    }, 100)
 
-    for (let index in _charts) {
-      let thisChart = _charts[index]
-      let canvas = d3.select('#scatterChart_' + index).select('canvas').node();
-      let context = canvas.getContext('2d');
-      let xDim = _xDims[index]
-      let centerX = thisChart.x()(sample[xDim])
-      let yDim = _yDims[index]
-      let centerY = thisChart.y()(sample[yDim])
-      var radius = 3;
-      context.beginPath();
-      context.arc(centerX, centerY, radius, 0, 2 * Math.PI, true);
-      context.fillStyle = 'rgba(0, 0, 0, 1)';
-      context.fill();
-      /*context.lineWidth = 3;
-      context.strokeStyle = '#000';
-      context.stroke();*/
-      // This is just to test the highlighted samples
-      /*_allDimensions.filter(null)
-      _allDimensions.filterFunction(d => {
-        if(d["ID"] == sample.OriginalID) console.log(d)
-        return d["ID"] == sample.OriginalID 
-      })*/
-    }
-    ready()
+
+
   }
 
   return scatterplot
