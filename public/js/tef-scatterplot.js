@@ -7,8 +7,11 @@ export default function scatterplot() {
   var _elements
   var _hiddenOpacity = 0.1
   var _scatterDimensions = []
+  var _xDims = []
+  var _yDims = []
   var _selectedVolcanes = {}
   var _ndx
+  var _charts = []
 
   // OBJECT INITIALIZATION
   scatterplot.init = function (tef, elements, volcanes, ndx) {
@@ -79,7 +82,7 @@ export default function scatterplot() {
       .attr('id', 'scatter_' + n)
       .attr('class', 'col-6')
       .style('float', 'left')
-      .style('padding', '10px')
+    //.style('padding', '10px')
     initElementSelectors(n)
     mainDiv.append('br')
     mainDiv.append('div').attr('id', 'scatterChart_' + n)
@@ -89,8 +92,9 @@ export default function scatterplot() {
   function getDataScatterplot(n) {
     var xDim = (d3.select('#xDim_' + n).selectAll('.active').node().id).substring(3)
     var yDim = (d3.select('#yDim_' + n).selectAll('.active').node().id).substring(3)
+    // TODO: I don't understand why there is no ID and I have to use empty string to access it!
     _scatterDimensions[n] = _ndx
-      .dimension((d) => { return [+d[xDim], +d[yDim], d['Volcano'], d['Event'], d['Flag']] })
+      .dimension((d) => { return [+d[xDim], +d[yDim], d['Volcano'], d['Event'], d['Flag'], d["ID"]] })
       .filter(
         function (d) {
           return d[4] != 'Outlier'
@@ -114,11 +118,12 @@ export default function scatterplot() {
         if (yDim != "87Sr_86Sr" && yDim != "143Nd_144Nd")
           yExtent = [yExtent[0] - yExtent[0] / 10, yExtent[1] + yExtent[1] / 10]
 
-          var isSelectionActive = _tef.isSelectionActive()
-        const type = d3.selectAll('.scatter-view:checked').node().value
-
+        var isSelectionActive = _tef.isSelectionActive()
         const xDimLabel = _tef.getElementLabel(xDim)
         const yDimLabel = _tef.getElementLabel(yDim)
+
+        _xDims[n] = xDim
+        _yDims[n] = yDim
 
         var scatterGroup = _scatterDimensions[n].group()
         var chart1 = new dc.ScatterPlot("#scatterChart_" + n)
@@ -131,7 +136,7 @@ export default function scatterplot() {
           .xAxisLabel(xDim + yDimLabel)
           .keyAccessor(function (d) { return d.key[0]; })
           .valueAccessor(function (d) { return d.key[1]; })
-          .clipPadding(10)
+          //.clipPadding(10)
           .dimension(_scatterDimensions[n])
           .highlightedSize(4)
           .symbolSize(5)
@@ -147,38 +152,49 @@ export default function scatterplot() {
           })
           .excludedColor('#ddd')
           .group(scatterGroup)
-          .colorAccessor(function (d) { return [d.key[2], d.key[3]]; })
+          .colorAccessor(function (d) { return [d.key[2], d.key[3], d.key[5]]; })
           .colors(function (colorKey) {
-            if (colorKey[0] in _selectedVolcanes)
-              return _selectedVolcanes[colorKey[0]]['color']
-            else
-              return '#ddd'
+            return getSampleColor(colorKey)
           })
-          .opacityAccessor(function (d) { return [d.key[2], d.key[3], d.key[0], d.key[1]]; })
-          .opacity(function (opacityKey) {
-            if (opacityKey[2] == '' || opacityKey[3] == '') return 0
-            if (!isSelectionActive) {
-              if (type == 'all') {
-                return 1
-              } else {
-                return 0
-              }
-            } else {
-              if (opacityKey[0] in _selectedVolcanes && _selectedVolcanes[opacityKey[0]]['events'].indexOf(opacityKey[1]) >= 0)
-                return 1
-              else
-                return _hiddenOpacity
-            }
-          })
+          .opacityAccessor(function (d) { return [d.key[2], d.key[3], d.key[0], d.key[1], d.key[5]]; })
+          .opacity(function (opacityKey) { return getSampleOpacity(opacityKey) })
           .emptySize(3)
           .emptyColor('#ddd')
           .title(function (d) { return d.value; })
         chart1.yAxis().ticks(5)
         chart1.xAxis().ticks(5)
         chart1.render();
+        _charts[n] = chart1
         ready()
       })
   }
+
+  function getSampleOpacity(opacityKey) {
+    var isSelectionActive = _tef.isSelectionActive()
+    const type = d3.selectAll('.scatter-view:checked').node().value
+    if (opacityKey[2] == '' || opacityKey[3] == '') return 0
+    if (!isSelectionActive) {
+      if (type == 'all') {
+        return 1
+      } else {
+        return 0
+      }
+    } else {
+      if (opacityKey[0] in _selectedVolcanes && _selectedVolcanes[opacityKey[0]]['events'].indexOf(opacityKey[1]) >= 0)
+        return 1
+      else
+        return _hiddenOpacity
+    }
+
+  }
+
+  function getSampleColor(colorKey) {
+    if (colorKey[0] in _selectedVolcanes)
+      return _selectedVolcanes[colorKey[0]]['color']
+    else
+      return '#ddd'
+  }
+
   function initElementSelectors(n) {
     const dims = ['x', 'y']
     dims.forEach(thisDim => {
@@ -240,5 +256,36 @@ export default function scatterplot() {
     else _hiddenOpacity = 0
     return scatterplot
   }
+
+  scatterplot.highlightSample = function (sample) {
+    loading()
+    dc.redrawAll()
+
+    for (let index in _charts) {
+      let thisChart = _charts[index]
+      let canvas = d3.select('#scatterChart_' + index).select('canvas').node();
+      let context = canvas.getContext('2d');
+      let xDim = _xDims[index]
+      let centerX = thisChart.x()(sample[xDim])
+      let yDim = _yDims[index]
+      let centerY = thisChart.y()(sample[yDim])
+      var radius = 3;
+      context.beginPath();
+      context.arc(centerX, centerY, radius, 0, 2 * Math.PI, true);
+      context.fillStyle = 'rgba(0, 0, 0, 1)';
+      context.fill();
+      /*context.lineWidth = 3;
+      context.strokeStyle = '#000';
+      context.stroke();*/
+      // This is just to test the highlighted samples
+      /*_allDimensions.filter(null)
+      _allDimensions.filterFunction(d => {
+        if(d["ID"] == sample.OriginalID) console.log(d)
+        return d["ID"] == sample.OriginalID 
+      })*/
+    }
+    ready()
+  }
+
   return scatterplot
 }

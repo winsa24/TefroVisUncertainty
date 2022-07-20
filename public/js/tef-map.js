@@ -23,11 +23,6 @@ export default function map() {
     myMasksLayerGroup.removeFrom(_mapContainer)
     myMasksLayerGroup = L.layerGroup([])
     myMasksLayerGroup.addTo(_mapContainer)
-    /*return 
-    myMasks.forEach(function (m) {
-      _mapContainer.removeLayer(m)
-    })
-    myMasks = []*/
   }
   function removeRLs(){
     myrls.forEach(function (m) {
@@ -280,9 +275,6 @@ export default function map() {
     // volcan is one in the loop 
     removeRLs()
     for (const [volcanName, volcan] of Object.entries(_volcanes)) {
-      //let volcanIm_latlng = volcan.image._bounds._southWest
-      // get all value in pixel
-      //let start = _mapContainer.latLngToContainerPoint(volcanIm_latlng)
 
       // GET THE STARTING POINT FOR EACH IMAGE
       let startRaw = _mapContainer.latLngToContainerPoint(volcan._latlng)
@@ -291,7 +283,6 @@ export default function map() {
       if(!volcan.k) continue
       let k = volcan.k
       let b = (!volcan.b)? 0 : volcan.b
-      // let b = 19.6// - imgHeight
       // I MOVE THE STARTING POINT UP SO THE LEFT BOTTOM
       // CORNER ALIGNS WITH THE TIP OF THE VOLCANO TRIANGLE
       let start = { x: startRaw.x, y: startRaw.y - b}
@@ -506,6 +497,9 @@ export default function map() {
           .on('mouseout', function (e) {
             this.closePopup()
           })
+          .on('click', function(e){
+            _tef.highlightSampleInScatterplot(m)
+          })
         newCircle.event = m.Event
         newCircle.volcano = m.Volcano
         newCircle.isVisible = true
@@ -541,6 +535,7 @@ export default function map() {
         _sampleCircles[m.Volcano].push(newCircle)
       }
     })
+    console.log('##############333')
     console.log(_sampleCircles[volcan].length)
 
 

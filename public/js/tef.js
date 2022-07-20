@@ -339,6 +339,10 @@ export default function tef() {
     }
   }
 
+  tef.highlightSampleInScatterplot = function(sample){
+    _scatterplot.highlightSample(sample)
+  }
+
   return tef.init()
 }
 
