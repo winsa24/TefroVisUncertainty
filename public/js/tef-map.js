@@ -12,8 +12,12 @@ export default function map() {
   // SETUP THE IMAGE DIMENSIONS. THIS IS THE FIXED DIMENSIONS
   // OF THE IMAGES. I PRESERVE THE WIDTH/HEIGHT RATIO 
   let volcanIms = []
-  var imgWidth = 400
-  var imgHeight = 316
+
+  var _imgRatio = 400 / 316
+  var _imgHeight = 70
+  var _imgWidth = _imgHeight * _imgRatio
+
+
 
   let bins = 10;
   let myrls = []; // my volcano regression line
@@ -24,7 +28,7 @@ export default function map() {
     myMasksLayerGroup = L.layerGroup([])
     myMasksLayerGroup.addTo(_mapContainer)
   }
-  function removeRLs(){
+  function removeRLs() {
     myrls.forEach(function (m) {
       _mapContainer.removeLayer(m)
     })
@@ -38,41 +42,48 @@ export default function map() {
   slider.oninput = function () {
     output.innerHTML = this.value * 10
     removeOldMasks()
-    drawMask(10* this.value)
-    _selectedVolcanoes.forEach( (volcan) =>{
+    drawMask(10 * this.value)
+    _selectedVolcanoes.forEach((volcan) => {
       removeSamples(volcan)
       addSampleCircles(volcan, 0.05 * this.value)
       removeSampleTails()
-      if(tailStatus) drawSampleTail(_sampleCircles[volcan])
+      if (tailStatus) drawSampleTail(_sampleCircles[volcan])
     })
   }
-  
-  $('#volcan-color').click(function(){
-    if($(this).is(':checked')){
+
+  $('#volcan-color').click(function () {
+    if ($(this).is(':checked')) {
       Object.keys(_volcanes).forEach(volcan => {
-        _volcanes[volcan].setStyle({color: _volcanes[volcan].color})
+        _volcanes[volcan].setStyle({ color: _volcanes[volcan].color })
       })
     } else {
       Object.keys(_volcanes).forEach(volcan => {
-        _volcanes[volcan].setStyle({color:  _volcanes[volcan].colorMap}) 
+        _volcanes[volcan].setStyle({ color: _volcanes[volcan].colorMap })
       })
     }
   });
-  $('#volcan-RL').click(function(){
-    if($(this).is(':checked')){
+  $('#volcan-RL').click(function () {
+    if ($(this).is(':checked')) {
       removeOldIms()
     } else {
       addNewIms()
     }
   });
+  $('#volcan-icon').click(function () {
+    if ($(this).is(':checked')) {
+      deactivateVolcanoes()
+    } else {
+      activateVolcanoes()
+    }
+  });
   let tailStatus = true
-  $('#sample-tail').click(function(){
-    if($(this).is(':checked')){
+  $('#sample-tail').click(function () {
+    if ($(this).is(':checked')) {
       removeSampleTails()
       tailStatus = false
     } else {
       tailStatus = true
-      _selectedVolcanoes.forEach( (volcan) =>{
+      _selectedVolcanoes.forEach((volcan) => {
         removeSamples(volcan)
         addSampleCircles(volcan, 0.05 * this.value)
         removeSampleTails()
@@ -83,36 +94,36 @@ export default function map() {
 
   let textMarker;
 
-  
+
   let cmReds;
-  function colorbar(SN){
+  function colorbar(SN) {
     let viridis = ["#440154", "#440256", "#450457", "#450559", "#46075a", "#46085c", "#460a5d", "#460b5e", "#470d60", "#470e61", "#471063", "#471164", "#471365", "#481467", "#481668", "#481769", "#48186a", "#481a6c", "#481b6d", "#481c6e", "#481d6f", "#481f70", "#482071", "#482173", "#482374", "#482475", "#482576", "#482677", "#482878", "#482979", "#472a7a", "#472c7a", "#472d7b", "#472e7c", "#472f7d", "#46307e", "#46327e", "#46337f", "#463480", "#453581", "#453781", "#453882", "#443983", "#443a83", "#443b84", "#433d84", "#433e85", "#423f85", "#424086", "#424186", "#414287", "#414487", "#404588", "#404688", "#3f4788", "#3f4889", "#3e4989", "#3e4a89", "#3e4c8a", "#3d4d8a", "#3d4e8a", "#3c4f8a", "#3c508b", "#3b518b", "#3b528b", "#3a538b", "#3a548c", "#39558c", "#39568c", "#38588c", "#38598c", "#375a8c", "#375b8d", "#365c8d", "#365d8d", "#355e8d", "#355f8d", "#34608d", "#34618d", "#33628d", "#33638d", "#32648e", "#32658e", "#31668e", "#31678e", "#31688e", "#30698e", "#306a8e", "#2f6b8e", "#2f6c8e", "#2e6d8e", "#2e6e8e", "#2e6f8e", "#2d708e", "#2d718e", "#2c718e", "#2c728e", "#2c738e", "#2b748e", "#2b758e", "#2a768e", "#2a778e", "#2a788e", "#29798e", "#297a8e", "#297b8e", "#287c8e", "#287d8e", "#277e8e", "#277f8e", "#27808e", "#26818e", "#26828e", "#26828e", "#25838e", "#25848e", "#25858e", "#24868e", "#24878e", "#23888e", "#23898e", "#238a8d", "#228b8d", "#228c8d", "#228d8d", "#218e8d", "#218f8d", "#21908d", "#21918c", "#20928c", "#20928c", "#20938c", "#1f948c", "#1f958b", "#1f968b", "#1f978b", "#1f988b", "#1f998a", "#1f9a8a", "#1e9b8a", "#1e9c89", "#1e9d89", "#1f9e89", "#1f9f88", "#1fa088", "#1fa188", "#1fa187", "#1fa287", "#20a386", "#20a486", "#21a585", "#21a685", "#22a785", "#22a884", "#23a983", "#24aa83", "#25ab82", "#25ac82", "#26ad81", "#27ad81", "#28ae80", "#29af7f", "#2ab07f", "#2cb17e", "#2db27d", "#2eb37c", "#2fb47c", "#31b57b", "#32b67a", "#34b679", "#35b779", "#37b878", "#38b977", "#3aba76", "#3bbb75", "#3dbc74", "#3fbc73", "#40bd72", "#42be71", "#44bf70", "#46c06f", "#48c16e", "#4ac16d", "#4cc26c", "#4ec36b", "#50c46a", "#52c569", "#54c568", "#56c667", "#58c765", "#5ac864", "#5cc863", "#5ec962", "#60ca60", "#63cb5f", "#65cb5e", "#67cc5c", "#69cd5b", "#6ccd5a", "#6ece58", "#70cf57", "#73d056", "#75d054", "#77d153", "#7ad151", "#7cd250", "#7fd34e", "#81d34d", "#84d44b", "#86d549", "#89d548", "#8bd646", "#8ed645", "#90d743", "#93d741", "#95d840", "#98d83e", "#9bd93c", "#9dd93b", "#a0da39", "#a2da37", "#a5db36", "#a8db34", "#aadc32", "#addc30", "#b0dd2f", "#b2dd2d", "#b5de2b", "#b8de29", "#bade28", "#bddf26", "#c0df25", "#c2df23", "#c5e021", "#c8e020", "#cae11f", "#cde11d", "#d0e11c", "#d2e21b", "#d5e21a", "#d8e219", "#dae319", "#dde318", "#dfe318", "#e2e418", "#e5e419", "#e7e419", "#eae51a", "#ece51b", "#efe51c", "#f1e51d", "#f4e61e", "#f6e620", "#f8e621", "#fbe723", "#fde725"]
     let viridis_r = viridis.reverse()
     cmReds = d3.scaleQuantize()
-    .domain([Math.min(...SN), Math.max(...SN)])// TODO:: normlize volcan sample number
-    .range(viridis_r)
+      .domain([Math.min(...SN), Math.max(...SN)])// TODO:: normlize volcan sample number
+      .range(viridis_r)
     // append a defs (for definition) element to your SVG
     var svgLegend = d3.select('#legend').append('svg')
-    .attr("width", 350)
-    .attr("height", 30);
+      .attr("width", 350)
+      .attr("height", 30);
     var defs = svgLegend.append('defs');
     // append a linearGradient element to the defs and give it a unique id
     var linearGradient = defs.append('linearGradient')
-    .attr('id', 'linear-gradient');
+      .attr('id', 'linear-gradient');
 
     // horizontal gradient
     linearGradient
-    .attr("x1", "0%")
-    .attr("y1", "0%")
-    .attr("x2", "100%")
-    .attr("y2", "0%");
+      .attr("x1", "0%")
+      .attr("y1", "0%")
+      .attr("x2", "100%")
+      .attr("y2", "0%");
 
     //Append multiple color stops by using D3's data/enter step
     linearGradient.selectAll("stop")
-      .data( cmReds.range() )
+      .data(cmReds.range())
       .enter().append("stop")
-      .attr("offset", function(d,i) { return i/(cmReds.range().length-1); })
-      .attr("stop-color", function(d) { return d; });
+      .attr("offset", function (d, i) { return i / (cmReds.range().length - 1); })
+      .attr("stop-color", function (d) { return d; });
 
     // // append title
     // svgLegend.append("text")
@@ -138,12 +149,12 @@ export default function map() {
     var axisLeg = d3.axisBottom(xLeg).ticks(5);
 
     svgLegend
-    .attr("class", "axis")
-    .append("g")
-    .attr("transform", "translate(10, 10)")
-    .call(axisLeg);
+      .attr("class", "axis")
+      .append("g")
+      .attr("transform", "translate(10, 10)")
+      .call(axisLeg);
   }
- 
+
 
   // INITIALIZATION
   map.init = function (tef) {
@@ -170,11 +181,32 @@ export default function map() {
 
     _mapContainer.on('zoomend', function (e) {
       let zoomLevel = _mapContainer.getZoom()
-      if (zoomLevel <= 3) bins = 2;
+      /*if (zoomLevel <= 3) bins = 2;
       else if (zoomLevel > 3 && zoomLevel <= 6) bins = 10;
       else if (zoomLevel > 6 && zoomLevel <= 8) bins = 20;
       else if (zoomLevel > 8 && zoomLevel <= 10) bins = 50;
-      else bins = 100;
+      else bins = 100;*/
+      if (zoomLevel <= 3) {
+        bins = 2
+        _imgHeight = 12 * zoomLevel
+        _imgWidth = _imgHeight * _imgRatio
+      } else if (zoomLevel > 3 && zoomLevel <= 6) {
+        bins = 10
+        _imgHeight = 15 * zoomLevel
+        _imgWidth = _imgHeight * _imgRatio
+      } else if (zoomLevel > 6 && zoomLevel <= 8) {
+        bins = 20
+        _imgHeight = 20 * zoomLevel
+        _imgWidth = _imgHeight * _imgRatio
+      } else if (zoomLevel > 8 && zoomLevel <= 10) {
+        bins = 50
+        _imgHeight = 20 * zoomLevel
+        _imgWidth = _imgHeight * _imgRatio
+      } else {
+        bins = 100
+        _imgHeight = 20 * zoomLevel
+        _imgWidth = _imgHeight * _imgRatio
+      }
 
       removeOldIms()
       addNewIms()
@@ -185,11 +217,11 @@ export default function map() {
           slider.disabled = false
         }
       }
-      else{
+      else {
         removeOldMasks()
         removeRLs()
         slider.disabled = true
-      } 
+      }
     })
 
     _volcanes = {}
@@ -199,83 +231,77 @@ export default function map() {
     return map
   }
 
-  function getPosWithin2Points(start, end, length){
-    if(isNaN(length)) return start
+  function getPosWithin2Points(start, end, length) {
+    if (isNaN(length)) return start
     const angle = Math.atan2(end.lat - start.lat, end.lng - start.lng);
     const xOffset = Math.cos(angle) * length;
     const yOffset = Math.sin(angle) * length;
-    return {'lat': start.lat + yOffset, 'lng': start.lng + xOffset}
+    return { 'lat': start.lat + yOffset, 'lng': start.lng + xOffset }
   }
 
-  const volcanNameList = ['Llaima','Sollipulli','Caburga_Huelemolle','Villarrica','Quetrupillán','Lanín','Mocho_Choshuenco','Puyehue_Cordón_Caulle','Antillanca_Casablanca','Osorno','Calbuco','Yate','Apagado','Hornopirén','Huequi','Michinmahuida','Chaitén','Corcovado','Melimoyu','Mentolat','Cay','Macá','Hudson','Lautaro','Aguilera','Reclus','Monte_Burney']
+  const volcanNameList = ['Llaima', 'Sollipulli', 'Caburga_Huelemolle', 'Villarrica', 'Quetrupillán', 'Lanín', 'Mocho_Choshuenco', 'Puyehue_Cordón_Caulle', 'Antillanca_Casablanca', 'Osorno', 'Calbuco', 'Yate', 'Apagado', 'Hornopirén', 'Huequi', 'Michinmahuida', 'Chaitén', 'Corcovado', 'Melimoyu', 'Mentolat', 'Cay', 'Macá', 'Hudson', 'Lautaro', 'Aguilera', 'Reclus', 'Monte_Burney']
 
-  function reversemapTailLength (value, oldRange, newRange) { // i.e. newRange : [2,1]
+  function reversemapTailLength(value, oldRange, newRange) { // i.e. newRange : [2,1]
     let perc = (value - oldRange[0]) / (oldRange[1] - oldRange[0])
-    let newValue = newRange[0] - (newRange[0] - newRange[1]) * perc 
+    let newValue = newRange[0] - (newRange[0] - newRange[1]) * perc
     return newValue;
   }
-  function mapTailLength(value, oldRange, newRange){ // i.e. newRange : [1,2]
-    let perc = (value - oldRange[0]) / (oldRange[1] - oldRange[0])
-    let newValue = (newRange[1] - newRange[0]) * perc + newRange[0]
-    return newValue;
-  }
-  
   var tails = [];
-  function removeSampleTails(){
+  function removeSampleTails() {
     tails.forEach(function (item) {
       _mapContainer.removeLayer(item)
     });
     tails = []
   }
 
-  function drawSampleTail(sampleArray, threshold = 0.1){
-    sampleArray.forEach((s)=>{
+  function drawSampleTail(sampleArray, threshold = 0.1) {
+    sampleArray.forEach((s) => {
       const disToAll = s.distoAllVolcan
       delete disToAll['Reclus']
       delete disToAll['Monte_Burney']
       const minDis = Math.min(...Object.values(disToAll))
       const maxDis = Math.max(...Object.values(disToAll))
-      const keysSorted = Object.keys(disToAll).sort(function(a,b){return disToAll[a]-disToAll[b]})
+      const keysSorted = Object.keys(disToAll).sort(function (a, b) { return disToAll[a] - disToAll[b] })
 
       const sampleCenter = s._latlng
-      let refVolcanName = volcanNameList.filter(v => v.substring(0,3) === s.volcano.substring(0,3))[0]
-      refVolcanName= refVolcanName.replaceAll("_", "-")
-      switch(refVolcanName){
-        case "Monte-Burney" : refVolcanName = "Monte Burney"; break
+      let refVolcanName = volcanNameList.filter(v => v.substring(0, 3) === s.volcano.substring(0, 3))[0]
+      refVolcanName = refVolcanName.replaceAll("_", "-")
+      switch (refVolcanName) {
+        case "Monte-Burney": refVolcanName = "Monte Burney"; break
         case "Puyehue-Cordón-Caulle": refVolcanName = "Puyehue-Cordón Caulle"; break;
       }
-      const tailLength = reversemapTailLength(disToAll[refVolcanName], [minDis, maxDis], [0.2,0]) // further = shorter, closer = longer
+      const tailLength = reversemapTailLength(disToAll[refVolcanName], [minDis, maxDis], [0.2, 0]) // further = shorter, closer = longer
       const endTail = getPosWithin2Points(sampleCenter, _volcanes[refVolcanName]._latlng, tailLength)
 
-      let tail = L.polyline([sampleCenter, endTail], {color: '#000', weight: 5}) // longer line bigger distance to RL
-          .addTo(_mapContainer)
-          .on('click', function (e) {
-            _mapContainer.flyTo(_volcanes[refVolcanName]._latlng, 11)
-          })   
+      let tail = L.polyline([sampleCenter, endTail], { color: '#000', weight: 5 }) // longer line bigger distance to RL
+        .addTo(_mapContainer)
+        .on('click', function (e) {
+          _mapContainer.flyTo(_volcanes[refVolcanName]._latlng, 11)
+        })
       tails.push(tail)
 
-      for(let i = 0; i < Object.keys(disToAll).length; i++){ 
+      for (let i = 0; i < Object.keys(disToAll).length; i++) {
         const v = keysSorted[i]
         // draw tail
-        let volcanoName= v.replaceAll("_", "-")
-        switch(volcanoName){
-          case "Monte-Burney" : volcanoName = "Monte Burney"; break
+        let volcanoName = v.replaceAll("_", "-")
+        switch (volcanoName) {
+          case "Monte-Burney": volcanoName = "Monte Burney"; break
           case "Puyehue-Cordón-Caulle": volcanoName = "Puyehue-Cordón Caulle"; break;
         }
 
         // only draw dis < refV's dis
-        if(v == refVolcanName) break;
+        if (v == refVolcanName) break;
 
         const potentialVolcan = _volcanes[volcanoName]
         const volcanoBelongCenter = _volcanes[volcanoName]._latlng
         // const tailLength = (disToAll[refVolcanName] - disToAll[v]) * 0.1// further = shorter, closer = longer
-        const tailLength = reversemapTailLength(disToAll[v], [minDis, maxDis], [0.2,0])// further = shorter, closer = longer
+        const tailLength = reversemapTailLength(disToAll[v], [minDis, maxDis], [0.2, 0])// further = shorter, closer = longer
         const endTail = getPosWithin2Points(sampleCenter, volcanoBelongCenter, tailLength)
-        let tail = L.polyline([sampleCenter, endTail], {color: potentialVolcan.color, weight: 5}) // longer line bigger distance to RL
+        let tail = L.polyline([sampleCenter, endTail], { color: potentialVolcan.color, weight: 5 }) // longer line bigger distance to RL
           .addTo(_mapContainer)
           .on('click', function (e) {
             _mapContainer.flyTo(potentialVolcan._latlng, 11)
-          })   
+          })
         tails.push(tail)
       }
     })
@@ -292,12 +318,12 @@ export default function map() {
       let startRaw = _mapContainer.latLngToContainerPoint(volcan._latlng)
 
       let length = 650
-      if(!volcan.k) continue
+      if (!volcan.k) continue
       let k = volcan.k
-      let b = (!volcan.b)? 0 : volcan.b
+      let b = (!volcan.b) ? 0 : volcan.b
       // I MOVE THE STARTING POINT UP SO THE LEFT BOTTOM
       // CORNER ALIGNS WITH THE TIP OF THE VOLCANO TRIANGLE
-      let start = { x: startRaw.x, y: startRaw.y - b}
+      let start = { x: startRaw.x, y: startRaw.y - b }
 
       let angle = Math.atan(k)
       let end = { x: start.x + length * Math.cos(angle), y: start.y - length * Math.sin(angle) }
@@ -308,11 +334,11 @@ export default function map() {
       myrl.start = L.latLng(lineStart.lat, lineStart.lng)
       myrl.end = L.latLng(lineEnd.lat, lineEnd.lng)
       myrls.push(myrl)
-      _volcanes[volcanName].myRL = myrl      
+      _volcanes[volcanName].myRL = myrl
     }
   }
 
-  function drawMask(halfWidth = 100){
+  function drawMask(halfWidth = 100) {
     removeOldMasks()
     myrls.forEach(myRL => {
       let start = _mapContainer.latLngToContainerPoint(myRL._bounds._southWest)
@@ -336,7 +362,7 @@ export default function map() {
         GeorightBottom,
         GeorightTop
       ];
-      let myMask = L.polygon(bounds, { color: 'gray', weight: 1 }) 
+      let myMask = L.polygon(bounds, { color: 'gray', weight: 1 })
       myMasksLayerGroup.addLayer(myMask)
     })
   }
@@ -350,15 +376,16 @@ export default function map() {
     for (const [volcanName, volcan] of Object.entries(_volcanes)) {
 
       // GET THE STARTING POINT FOR EACH IMAGE
-      let startRaw = _mapContainer.latLngToContainerPoint(volcan._latlng)
+      let latlng = volcan._latlng
+      let startRaw = _mapContainer.latLngToContainerPoint(latlng)
 
       // I MOVE THE STARTING POINT UP SO THE LEFT BOTTOM
       // CORNER ALIGNS WITH THE TIP OF THE VOLCANO TRIANGLE
-      let start = { x: startRaw.x, y: startRaw.y - imgHeight }
+      let start = { x: startRaw.x, y: startRaw.y - _imgHeight }
       let startLatLng = _mapContainer.containerPointToLatLng(start)
 
       // I CALCULATE THE IMAGE BOUNDS BASED ON THE IMAGE SIZE RATIO
-      let imagePixelBounds = { x: start.x + imgWidth, y: start.y + imgHeight }
+      let imagePixelBounds = { x: start.x + _imgWidth, y: start.y + _imgHeight }
       let imageEnd = _mapContainer.containerPointToLatLng(imagePixelBounds)
 
       var imageUrl = `/img/heatmap_${bins}_viridis_r/${volcanName}.png`
@@ -366,19 +393,52 @@ export default function map() {
       if (['Puntiagudo', 'Tronador', 'Arenales', 'Aguilera', 'Reclus', 'Fueguino', 'Monte Burney'].indexOf(volcanName) >= 0) imageUrl = `/img/blank.png`
       let imageBounds, opacity
       if (bins < 50) {
-        // imagePixelBounds = { x: start.x + imgWidth * 0.5, y: start.y + imgHeight *0.5}
-        start.y += imgHeight * 0.5
-        imagePixelBounds.x -= imgWidth * 0.5
+        // imagePixelBounds = { x: start.x + _imgWidth * 0.5, y: start.y + _imgHeight *0.5}
+        start.y += _imgHeight * 0.5
+        imagePixelBounds.x -= _imgWidth * 0.5
         startLatLng = _mapContainer.containerPointToLatLng(start)
         imageEnd = _mapContainer.containerPointToLatLng(imagePixelBounds)
         imageBounds = [startLatLng, imageEnd]
-        opacity = 0.01 * bins
+        opacity = 1 //0.01 * bins
       }
       else {
         imageBounds = [startLatLng, imageEnd]
         opacity = 1
       }
-      let volcanIm = L.imageOverlay(imageUrl, imageBounds, { alt: `no plot for ${volcanName}` , opacity: opacity  }).addTo(_mapContainer)
+
+      // CREATE THE IMAGE ICON
+
+      let volcanTip = volcanoTip(volcanName, latlng.lat, latlng.lng)
+
+
+      let volcanIm = L.imageOverlay(imageUrl,
+        imageBounds,
+        {
+          alt: `no plot for ${volcanName}`,
+          opacity: opacity,
+          className: 'scatterplot-map-image',
+          interactive: true,
+          volcanoName: volcanName
+        })
+        .addTo(_mapContainer)
+        .bindPopup(volcanTip)
+        .on('click', function (e) {
+          var id = e.target.options.volcanoName
+          _tef.selectVolcano(id, true)
+        })
+        .on('mouseover', function (e) {
+          L.popup({ offset: [10, -10] })
+            .setLatLng(latlng)
+            .setContent(volcanTip)
+            .openOn(_mapContainer);
+          //this.openPopup()
+        })
+        .on('mouseout', function (e) {
+          _mapContainer.closePopup()
+          //this.closePopup()
+        })
+
+
       volcanIms.push(volcanIm)
       _volcanes[volcanName].image = volcanIm
     }
@@ -392,22 +452,12 @@ export default function map() {
     colorbar(SN)
 
     volcanes.forEach(function (volcan, i) {
-      var lat = Number(volcan.Latitude)
-      var lon = Number(volcan.Longitude)
-      var volcanTip = '<div id=' + volcan.Name + '>'
-      volcanTip += '<h4>' + volcan.Name + '</h4>'
-      volcanTip += '<h4>(' + [lat, lon] + ')</h4>'
-      volcanTip += '</div>'
-      var diff = 0.05
-      var latlngs = [
-        [lat - diff, lon - diff],
-        [lat - diff, lon + diff],
-        [lat + diff, lon],
-      ]
+      let lat = Number(volcan.Latitude)
+      let lng = Number(volcan.Longitude)
+      let volcanTip = volcanoTip(volcan.Name, lat, lng)
 
       let sampleNumbers = volcan.number_of_samples
-      // var volcanIcon = L.polygon(latlngs, { color: 'grey', fillOpacity: 0.7, opacity: 0.7 })
-      let latLng = L.latLng(lat, lon)
+      let latLng = L.latLng(lat, lng)
       var volcanIcon = L.triangleMarker(latLng, {
         rotation: 0,
         width: 20,
@@ -420,6 +470,7 @@ export default function map() {
       volcanIcon.color = volcan.Color
       volcanIcon.colorMap = cmReds(sampleNumbers)
       volcanIcon.isSelected = false
+      volcanIcon.isVisible = true
       volcanIcon
         .addTo(_mapContainer)
         .bindPopup(volcanTip)
@@ -442,6 +493,27 @@ export default function map() {
     })
     addNewIms()
     return map
+  }
+
+  function activateVolcanoes() {
+    for (let volcanoName in _volcanes) {
+      let icon = _volcanes[volcanoName]
+      if (!icon.isVisible){
+        icon.addTo(_mapContainer)
+        icon.isVisible = true
+      }
+        
+    }
+  }
+
+  function deactivateVolcanoes() {
+    for (let volcanoName in _volcanes) {
+      let icon = _volcanes[volcanoName]
+      if(icon.isVisible){
+        icon.removeFrom(_mapContainer)
+        icon.isVisible = false
+      }      
+    }
   }
 
   // UPDATES AFTER USER SELECTION
@@ -491,13 +563,13 @@ export default function map() {
       map.updateSelectedEvents(volcan, _selectedVolcanoes[volcan].events)
     }
   }
-  function addSampleCircles(volcan, threshold = 0.5){
+  function addSampleCircles(volcan, threshold = 0.5) {
     const volcanIcon = _volcanes[volcan]
     threshold = output.innerHTML * 0.005
     _samples[volcan].forEach(function (m) {
       var lat = m.Latitude
       var lon = m.Longitude
-      if(m.sample_RMSE_to_regression && m.sample_RMSE_to_regression > threshold){
+      if (m.sample_RMSE_to_regression && m.sample_RMSE_to_regression > threshold) {
         var newCircle = L.circle([lat, lon], { radius: m.sample_RMSE_to_regression ? m.sample_RMSE_to_regression * 2000 : 200, color: volcanIcon.color, fillColor: volcanIcon.color, weight: 1, fill: true })
         var tipText = sampleTipText(m)
         newCircle
@@ -516,32 +588,32 @@ export default function map() {
         newCircle.volcano = m.Volcano
         newCircle.isVisible = true
         newCircle.distoAllVolcan = {
-          Llaima : m.Llaima,
-          Sollipulli :  m.Sollipulli,
-          Caburga_Huelemolle :  m.Caburga_Huelemolle,
-          Villarrica :  m.Villarrica,
-          Quetrupillán:  m.Quetrupillán,
-          Lanín :  m.Lanín,
-          Puyehue_Cordón_Caulle : m.Puyehue_Cordón_Caulle,
-          Antillanca_Casablanca :  m.Antillanca_Casablanca,
-          Osorno:  m.Osorno,
-          Calbuco:  m.Calbuco,
-          Yate : m.Yate,
-          Hornopirén:  m.Hornopirén,
+          Llaima: m.Llaima,
+          Sollipulli: m.Sollipulli,
+          Caburga_Huelemolle: m.Caburga_Huelemolle,
+          Villarrica: m.Villarrica,
+          Quetrupillán: m.Quetrupillán,
+          Lanín: m.Lanín,
+          Puyehue_Cordón_Caulle: m.Puyehue_Cordón_Caulle,
+          Antillanca_Casablanca: m.Antillanca_Casablanca,
+          Osorno: m.Osorno,
+          Calbuco: m.Calbuco,
+          Yate: m.Yate,
+          Hornopirén: m.Hornopirén,
           Huequi: m.Huequi,
-          Michinmahuida:  m.Michinmahuida,
-          Chaitén:  m.Chaitén,
+          Michinmahuida: m.Michinmahuida,
+          Chaitén: m.Chaitén,
           Corcovado: m.Corcovado,
-          Melimoyu:  m.Melimoyu,
-          Mentolat:  m.Mentolat,
-          Cay:  m.Cay,
+          Melimoyu: m.Melimoyu,
+          Mentolat: m.Mentolat,
+          Cay: m.Cay,
           Macá: m.Macá,
-          Hudson:  m.Hudson,
-          Lautaro:  m.Lautaro,
+          Hudson: m.Hudson,
+          Lautaro: m.Lautaro,
           Aguilera: m.Aguilera,
-          Reclus:  m.Reclus,
-          Monte_Burney:  m.Monte_Burney,
-          Apagado:m.Apagado,
+          Reclus: m.Reclus,
+          Monte_Burney: m.Monte_Burney,
+          Apagado: m.Apagado,
           Mocho_Choshuenco: m.Mocho_Choshuenco
         }
         _sampleCircles[m.Volcano].push(newCircle)
@@ -551,14 +623,14 @@ export default function map() {
     console.log(_sampleCircles[volcan].length)
 
 
-    if(textMarker) _mapContainer.removeLayer(textMarker)
+    if (textMarker) _mapContainer.removeLayer(textMarker)
     var icontext = _sampleCircles[volcan].length + '/' + _samples[volcan].length
     var pos = _volcanes[volcan]._latlng
     var icon = L.divIcon({
-      iconSize:null,
-      html:'<div class="map-label-content">'+icontext+'</div>'
+      iconSize: null,
+      html: '<div class="map-label-content">' + icontext + '</div>'
     });
-    textMarker = L.marker(pos,{icon: icon}).addTo(_mapContainer);
+    textMarker = L.marker(pos, { icon: icon }).addTo(_mapContainer);
 
   }
   function addSamples(volcan, samples) {
@@ -574,6 +646,14 @@ export default function map() {
       _mapContainer.removeLayer(m)
     })
     _sampleCircles[volcan] = []
+  }
+
+  function volcanoTip(volcanoName, lat, lng) {
+    var volcanTip = '<div id=' + volcanoName + '>'
+    volcanTip += '<h4>' + volcanoName + '</h4>'
+    volcanTip += '<h4>(' + [lat, lng] + ')</h4>'
+    volcanTip += '</div>'
+    return volcanTip
   }
   return map
 }

@@ -178,3 +178,7 @@ H2 {display: inline; margin-right: 20px;}
     padding: 3px;
     white-space: nowrap;
 }
+
+.scatterplot-map-image{
+    border: 1px black solid
+}
