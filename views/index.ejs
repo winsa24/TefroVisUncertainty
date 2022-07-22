@@ -93,11 +93,16 @@
                         <p>Sample Number <input type="checkbox" id="volcan-color"> Deactivate colormap on volcano</p>
                         <div id='legend'> </div>
                     </div>
+                    <hr />
                     <input type="checkbox" id="volcan-RL"> Deactivate RL on volcano
                     <input type="checkbox" id="volcan-icon"> Deactivate volcano icon
+                    <hr />
                     <div>
-                        <input type="range" min="1" max="10" value="10" class="slider" id="my-range">
-                        <p><span id="demo">100</span>% of the maximum distance to the regression line</p>
+                        <label for="my-range">Distance between a scatter point and regression line:</label>
+                        <p>
+                            <input type="range" min="1" max="10" value="10" class="slider" id="my-range">
+                            Top <span id="demo">100</span>% biggest distance
+                        </p>
                     </div>
                     <input type="checkbox" id="sample-tail"> Deactivate sample pointers on sample
                 </p>
